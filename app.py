@@ -14,13 +14,13 @@ from reportlab.pdfgen import canvas
 st.set_page_config(page_title="Qaza Prayer Tracker System", page_icon="🕋", layout="wide")
 
 st.title("🕋 Automated Qaza Prayer Tracker & Printable Generator")
-st.markdown("Calculate your missed prayers, adjust your overestimation buffer, allocate your lifetime debts across the 5 daily prayers, and generate a **print-ready PDF**.")
+st.markdown("Calculate your missed prayers, adjust your **safety margin**, allocate your lifetime debts across the 5 daily prayers, and generate a **print-ready PDF**.")
 
 # ==========================================
 # STEP 1: YEAR RANGE SELECTOR & HISTORY
 # ==========================================
 st.header("Step 1: Select Your Year Range & Prayer History")
-st.markdown("Select your starting year (e.g., year of puberty) and ending year. The system will automatically generate your yearly table.")
+st.markdown("Select your starting year (e.g., year of puberty) and ending year. The system will automatically generate your yearly table. *(Tip: The years are locked automatically, but you can freely click and type into the **Adjusted Days** and **Avg Wakt** columns).*")
 
 col_yr1, col_yr2 = st.columns(2)
 start_year = col_yr1.number_input("Start Year", min_value=1950, max_value=2030, value=2017, step=1)
@@ -40,15 +40,13 @@ if range_key not in st.session_state:
         "Avg_Wakt_Prayed": [3.5] * len(years)
     })
 
-st.markdown("Enter your valid days prayed and average daily wakts (out of 5) for each year below:")
-
 edited_df = st.data_editor(
     st.session_state[range_key], 
     key=f"editor_{range_key}",
     hide_index=True,
     column_config={
         "Year": st.column_config.NumberColumn("Year", disabled=True, format="%d"),
-        "Days": st.column_config.NumberColumn("Valid Days Prayed", min_value=0, max_value=366, step=1),
+        "Days": st.column_config.NumberColumn("Adjusted Days", min_value=0, max_value=366, step=1),
         "Avg_Wakt_Prayed": st.column_config.NumberColumn("Avg Wakt Prayed (Max 5)", min_value=0.0, max_value=5.0, step=0.1)
     }
 )
@@ -70,24 +68,24 @@ num_years = len(cleaned_df)
 st.divider()
 
 # ==========================================
-# STEP 2: SUMMARY & OVERESTIMATION
+# STEP 2: SUMMARY & SAFETY MARGIN
 # ==========================================
-st.header("Step 2: Summary & Overestimated Buffer")
+st.header("Step 2: Summary & Safety Margin")
 
 col1, col2, col3 = st.columns(3)
 col1.metric("Total Obligatory Prayers", f"{total_obligatory:,}")
 col2.metric("Total Actual Prayed", f"{total_actual:,}")
 col3.metric("Calculated Missed Prayers", f"{total_missed:,}")
 
-default_overestimated = int(math.ceil(total_missed / 1000.0) * 1000) if total_missed > 0 else 1000
+default_safety_target = int(math.ceil(total_missed / 1000.0) * 1000) if total_missed > 0 else 1000
 
-st.markdown("### Overestimation & Manual Override")
-st.markdown("To ensure complete spiritual peace of mind, the system suggests rounding up your missed prayers to the nearest 1,000. You can manually edit this amount below if desired.")
+st.markdown("### Safety Margin & Manual Adjustment")
+st.markdown("To ensure complete spiritual peace of mind, the system suggests rounding up your missed prayers to the nearest 1,000. You can use the manual adjustment field below if you prefer a custom target.")
 
 overestimated_target = st.number_input(
-    "Overestimated Target Amount (Wakts)",
+    "Final Safety Target (Wakts)",
     min_value=0,
-    value=default_overestimated,
+    value=default_safety_target,
     step=500
 )
 
@@ -118,7 +116,7 @@ total_allocated = sum(allocations_dict.values())
 allocation_gap = overestimated_target - total_allocated
 
 if allocation_gap != 0:
-    st.error(f"⚠️ **Allocation Mismatch:** Your allocated total ({total_allocated:,}) does not equal your Overestimated Target ({overestimated_target:,}). Difference: **{allocation_gap:+,} prayers**. Please adjust your manual allocations before printing.")
+    st.error(f"⚠️ **Allocation Mismatch:** Your allocated total ({total_allocated:,}) does not equal your Safety Target ({overestimated_target:,}). Difference: **{allocation_gap:+,} prayers**. Please adjust your manual allocations before printing.")
     can_print = False
 else:
     st.success("✅ Lifetime allocation matches your target perfectly!")
@@ -238,7 +236,7 @@ def generate_pdf_bytes():
         ["Total Obligatory Prayers", f"{total_obligatory:,}"],
         ["Total Actual Prayed", f"{total_actual:,}"],
         ["Total Missed (Calculated)", f"{total_missed:,}"],
-        ["Overestimated Amount (Target)", f"{overestimated_target:,}"]
+        ["Safety Margin Target", f"{overestimated_target:,}"]
     ]
     t1 = Table(summary_data, colWidths=[250, 150])
     t1.setStyle(TableStyle([
