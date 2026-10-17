@@ -167,7 +167,7 @@ class NumberedCanvas(canvas.Canvas):
 def make_rounded_checkbox_grid(count, cols=15):
     styles = getSampleStyleSheet()
     if count <= 0:
-        return Paragraph("<i>No qaza prayers required</i>", ParagraphStyle('NoQazaReq', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor("#718096")))
+        return Paragraph("<i>No qaza prayers required</i>", ParagraphStyle('NoneReq', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor("#718096")))
     
     cells = []
     row = []
