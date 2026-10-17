@@ -7,7 +7,7 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, NextPageTemplate, PageBreak, Paragraph, Spacer, Table, TableStyle
 from reportlab.pdfgen import canvas
 
 # Page Configuration
@@ -39,7 +39,6 @@ edited_df = st.data_editor(
     }
 )
 
-# Safeguard against empty dataframes
 if edited_df is None or len(edited_df) == 0:
     st.warning("⚠️ Please enter at least one valid year in the table above to proceed.")
     st.stop()
@@ -106,7 +105,6 @@ allocations_dict = {
 total_allocated = sum(allocations_dict.values())
 allocation_gap = overestimated_target - total_allocated
 
-# Strict Gap Validation
 if allocation_gap != 0:
     st.error(f"⚠️ **Allocation Mismatch:** Your allocated total ({total_allocated:,}) does not equal your Overestimated Target ({overestimated_target:,}). Difference: **{allocation_gap:+,} prayers**. Please adjust your manual allocations before printing.")
     can_print = False
@@ -131,12 +129,11 @@ st.divider()
 st.header("Step 4: Generate Printable PDF Tracker")
 st.markdown(f"Every year starts on a brand-new page featuring its exact **Year Title Header** and round-square checkboxes.")
 
-class YearlyHeaderCanvas(canvas.Canvas):
-    """Dynamic canvas that prints the exact year running header on every page."""
+class NumberedCanvas(canvas.Canvas):
+    """Canvas to calculate total page count and draw clean footers."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._saved_page_states = []
-        self._page_years = [] # Map page numbers to year titles if needed
 
     def showPage(self):
         self._saved_page_states.append(dict(self.__dict__))
@@ -146,27 +143,15 @@ class YearlyHeaderCanvas(canvas.Canvas):
         num_pages = len(self._saved_page_states)
         for state in self._saved_page_states:
             self.__dict__.update(state)
-            self.draw_header_footer(num_pages)
+            self.draw_footer(num_pages)
             super().showPage()
         super().save()
 
-    def draw_header_footer(self, page_count):
+    def draw_footer(self, page_count):
         self.saveState()
-        self.setFont("Helvetica-Bold", 10)
-        self.setFillColor(colors.HexColor("#1A365D"))
-        
-        if self._pageNumber == 1:
-            self.drawString(30, 815, "Personal Qaza Prayer Tracker & Master Summary")
-        else:
-            self.drawString(30, 815, "Qaza Prayer Tracker — Yearly Checklist Booklet")
-            
         self.setFont("Helvetica", 9)
         self.setFillColor(colors.HexColor("#718096"))
         self.drawRightString(565, 20, f"Page {self._pageNumber} of {page_count}")
-        
-        self.setStrokeColor(colors.HexColor("#CBD5E0"))
-        self.setLineWidth(0.5)
-        self.line(30, 805, 565, 805)
         self.restoreState()
 
 def make_rounded_checkbox_grid(count, cols=15):
@@ -195,7 +180,24 @@ def make_rounded_checkbox_grid(count, cols=15):
 
 def generate_pdf_bytes():
     pdf_buffer = io.BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=45, bottomMargin=40)
+    
+    # Frame layout (A4: 595.27 x 841.89)
+    frame = Frame(30, 40, 535, 756, id='normal')
+    
+    # Summary template callback
+    def draw_summary_header(canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        canvas_obj.setFont("Helvetica-Bold", 10)
+        canvas_obj.setFillColor(colors.HexColor("#1A365D"))
+        canvas_obj.drawString(30, 815, "Personal Qaza Prayer Tracker & Master Summary")
+        canvas_obj.setStrokeColor(colors.HexColor("#CBD5E0"))
+        canvas_obj.setLineWidth(0.5)
+        canvas_obj.line(30, 805, 565, 805)
+        canvas_obj.restoreState()
+
+    summary_template = PageTemplate(id='summary', frames=frame, onPage=draw_summary_header)
+    doc = BaseDocTemplate(pdf_buffer, pagesize=A4, pageTemplates=[summary_template])
+
     story = []
     styles = getSampleStyleSheet()
     
@@ -253,9 +255,26 @@ def generate_pdf_bytes():
     story.append(t2)
     story.append(PageBreak())
 
-    # Yearly Pages with prominent Year Title Headers
+    # Yearly Pages with Dynamic Year Templates
     years = cleaned_df['Year'].astype(int).tolist()
     for idx, year in enumerate(years):
+        # Create a dedicated template for this specific year so its header correctly displays the year everywhere it spans
+        def make_year_header(y):
+            def draw_header(canvas_obj, doc_obj):
+                canvas_obj.saveState()
+                canvas_obj.setFont("Helvetica-Bold", 10)
+                canvas_obj.setFillColor(colors.HexColor("#1A365D"))
+                canvas_obj.drawString(30, 815, f"Qaza Prayer Tracker — Year {y}")
+                canvas_obj.setStrokeColor(colors.HexColor("#CBD5E0"))
+                canvas_obj.setLineWidth(0.5)
+                canvas_obj.line(30, 805, 565, 805)
+                canvas_obj.restoreState()
+            return draw_header
+
+        year_template_id = f"year_{year}"
+        doc.addPageTemplates([PageTemplate(id=year_template_id, frames=frame, onPage=make_year_header(year))])
+        
+        story.append(NextPageTemplate(year_template_id))
         story.append(Paragraph(f"<b>Qaza Prayer Tracker — Year {year}</b>", title_style))
         story.append(Spacer(1, 10))
         
@@ -268,11 +287,10 @@ def generate_pdf_bytes():
         if idx < len(years) - 1:
             story.append(PageBreak())
 
-    doc.build(story, canvasmaker=YearlyHeaderCanvas)
+    doc.build(story, canvasmaker=NumberedCanvas)
     pdf_buffer.seek(0)
     return pdf_buffer.getvalue()
 
-# Single-click download button or blocked state
 if can_print:
     st.download_button(
         label="📥 Download Printable PDF Tracker",
