@@ -8,6 +8,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.pdfgen import canvas
 
 # Page Configuration
 st.set_page_config(page_title="Qaza Prayer Tracker System", page_icon="🕋", layout="wide")
@@ -147,14 +148,51 @@ st.divider()
 # STEP 4: PRINTABLE PDF GENERATOR
 # ==========================================
 st.header("Step 4: Generate Printable PDF Tracker")
-st.markdown(f"Every year starts on a brand-new page with its respective **Year Title Header** and round-square checkboxes. Estimated print length: **{num_years + 1} pages** (1 master page + {num_years} yearly pages).")
+st.markdown(f"Every year starts on a brand-new page with its respective **Year Title Header** and round-square checkboxes.")
+
+class YearlyHeaderCanvas(canvas.Canvas):
+    """Custom canvas to generate persistent running headers and footers on every page."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_header_footer(num_pages)
+            super().showPage()
+        super().save()
+
+    def draw_header_footer(self, page_count):
+        self.saveState()
+        self.setFont("Helvetica-Bold", 10)
+        self.setFillColor(colors.HexColor("#1A365D"))
+        
+        if self._pageNumber == 1:
+            self.drawString(30, 815, "Personal Qaza Prayer Tracker & Master Summary")
+        else:
+            self.drawString(30, 815, "Qaza Prayer Tracker — Yearly Checklist Booklet")
+            
+        self.setFont("Helvetica", 9)
+        self.setFillColor(colors.HexColor("#718096"))
+        self.drawRightString(565, 20, f"Page {self._pageNumber} of {page_count}")
+        
+        # Divider line
+        self.setStrokeColor(colors.HexColor("#CBD5E0"))
+        self.setLineWidth(0.5)
+        self.line(30, 805, 565, 805)
+        self.restoreState()
 
 def make_rounded_checkbox_grid(count, cols=15):
     cells = []
     row = []
     for i in range(1, count + 1):
         d = Drawing(14, 14)
-        # Round square shape: rx=3, ry=3
         d.add(Rect(1, 1, 12, 12, rx=3, ry=3, fillColor=colors.white, strokeColor=colors.HexColor("#4A5568"), strokeWidth=1))
         row.append(d)
         if len(row) == cols:
@@ -176,7 +214,8 @@ def make_rounded_checkbox_grid(count, cols=15):
 
 def generate_pdf_bytes():
     pdf_buffer = io.BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    # Increased topMargin to 45 to give breathing room for the running header
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=45, bottomMargin=40)
     story = []
     styles = getSampleStyleSheet()
     
@@ -237,7 +276,6 @@ def generate_pdf_bytes():
     # Yearly Pages with Year Title Headers
     years = cleaned_df['Year'].astype(int).tolist()
     for idx, year in enumerate(years):
-        # Header displaying the year title on every page
         story.append(Paragraph(f"<b>Qaza Prayer Tracker — Year {year}</b>", title_style))
         story.append(Spacer(1, 10))
         
@@ -250,7 +288,8 @@ def generate_pdf_bytes():
         if idx < len(years) - 1:
             story.append(PageBreak())
 
-    doc.build(story)
+    # Build with the custom running header canvas
+    doc.build(story, canvasmaker=YearlyHeaderCanvas)
     pdf_buffer.seek(0)
     return pdf_buffer.getvalue()
 
