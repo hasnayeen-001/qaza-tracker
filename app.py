@@ -193,10 +193,16 @@ def make_rounded_checkbox_grid(count, cols=15):
     return t
 
 @st.cache_data
-def generate_pdf_bytes():
+def generate_pdf_bytes(df):
     pdf_buffer = io.BytesIO()
 
     frame = Frame(30, 40, 535, 756, id='normal')
+    # ... (rest of your PDF setup code)
+
+    # Make sure any reference inside uses 'df' instead of 'cleaned_df'
+    years = df['Year'].astype(int).tolist()
+    for y in years:
+        # ... rest of your code
     
     # Page 1 (Summary) - NO running top header line
     summary_template = PageTemplate(id='summary', frames=frame, onPage=lambda c, d: None)
@@ -292,10 +298,9 @@ def generate_pdf_bytes():
     return pdf_buffer.getvalue()
 
 if can_print:
-    # Single direct download button - No session state loops!
     st.download_button(
         label="📥 Download Printable PDF Tracker",
-        data=generate_pdf_bytes(),
+        data=generate_pdf_bytes(cleaned_df),  # <--- Pass cleaned_df here!
         file_name="Qaza_Prayer_Tracker_Printable.pdf",
         mime="application/pdf",
         type="primary"
