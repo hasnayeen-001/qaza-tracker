@@ -14,7 +14,7 @@ from reportlab.pdfgen import canvas
 st.set_page_config(page_title="Qaza Prayer Tracker System", page_icon="🕋", layout="wide")
 
 st.title("🕋 Automated Qaza Prayer Tracker & Printable Generator")
-st.markdown("Calculate your missed prayers, adjust your safety margin, allocate your lifetime debts across the 5 daily prayers, and generate a **print-ready PDF**.")
+st.markdown("Calculate your missed prayers, adjust your **safety margin**, allocate your lifetime debts across the 5 daily prayers, and generate a **print-ready PDF**.")
 
 # ==========================================
 # STEP 1: YEAR RANGE SELECTOR & HISTORY
@@ -165,6 +165,10 @@ class NumberedCanvas(canvas.Canvas):
         self.restoreState()
 
 def make_rounded_checkbox_grid(count, cols=15):
+    styles = getSampleStyleSheet()
+    if count <= 0:
+        return Paragraph("<i>None required</i>", ParagraphStyle('NoneReq', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor("#718096")))
+    
     cells = []
     row = []
     for i in range(1, count + 1):
