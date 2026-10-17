@@ -295,31 +295,22 @@ def generate_pdf_bytes():
     return pdf_buffer.getvalue()
 
 if can_print:
-    if "pdf_ready" not in st.session_state:
-        st.session_state.pdf_ready = False
+    # Compile cached PDF bytes
+    pdf_payload = generate_pdf_bytes()
 
-    # Button 1: Prepares the PDF binary (Keeps IDM quiet while editing numbers)
-    if not st.session_state.pdf_ready:
-        if st.button("📄 Generate Printable PDF", type="primary"):
-            st.session_state.pdf_ready = True
-            st.rerun()
+    # Single-click download button
+    download_clicked = st.download_button(
+        label="📥 Download Printable PDF Tracker",
+        data=pdf_payload,
+        file_name="Qaza_Prayer_Tracker_Printable.pdf",
+        mime="application/pdf",
+        type="primary",
+        key="pdf_download_btn"
+    )
 
-    # Button 2: Downloads the actual file instantly in 1 click
-    else:
-        pdf_bytes = generate_pdf_bytes()
-        
-        st.download_button(
-            label="📥 Click to Download PDF",
-            data=pdf_bytes,
-            file_name="Qaza_Prayer_Tracker_Printable.pdf",
-            mime="application/pdf",
-            type="primary"
-        )
-        
-        # Reset button if the user wants to go back and edit numbers
-        if st.button("🔄 Done / Edit Numbers Again"):
-            st.session_state.pdf_ready = False
-            st.rerun()
+    # Immediately clear cache on download click so IDM stays silent on subsequent table edits
+    if download_clicked:
+        st.cache_data.clear()
 
 else:
     st.button("📥 Download Printable PDF Tracker", disabled=True, help="Fix the allocation gap above to enable PDF generation.")
