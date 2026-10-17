@@ -1,5 +1,5 @@
 [readme.md](https://github.com/user-attachments/files/33598019/readme.md)
-# Direct link without running the code: **https://kaza-tracker.streamlit.app/**\
+# Direct link without running the code: **https://kaza-tracker.streamlit.app**\
 \
 🕋 Automated Qaza Prayer Tracker & Printable Generator
 
