@@ -191,7 +191,11 @@ def make_rounded_checkbox_grid(count, cols=15):
         ('TOPPADDING', (0,0), (-1,-1), 2),
     ]))
     return t
-
+@st.cache_data
+def generate_pdf_bytes():
+    pdf_buffer = io.BytesIO()
+    
+    frame = Frame(30, 40, 535, 756, id='normal')
 def generate_pdf_bytes():
     pdf_buffer = io.BytesIO()
     
@@ -291,14 +295,12 @@ def generate_pdf_bytes():
     return pdf_buffer.getvalue()
 
 if can_print:
-    if st.button("📄 Prepare Printable PDF", type="primary"):
-        with st.spinner("Generating PDF..."):
-            pdf_data = generate_pdf_bytes()
-            st.download_button(
-                label="📥 Click Here to Download PDF",
-                data=pdf_data,
-                file_name="Qaza_Prayer_Tracker_Printable.pdf",
-                mime="application/pdf"
-            )
+    st.download_button(
+        label="📥 Download Printable PDF Tracker",
+        data=generate_pdf_bytes(),
+        file_name="Qaza_Prayer_Tracker_Printable.pdf",
+        mime="application/pdf",
+        type="primary"
+    )
 else:
     st.button("📥 Download Printable PDF Tracker", disabled=True, help="Fix the allocation gap above to enable PDF generation.")
