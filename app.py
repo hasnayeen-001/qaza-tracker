@@ -286,4 +286,17 @@ def generate_pdf_bytes():
             story.append(make_rounded_checkbox_grid(count, cols=15))
             story.append(Spacer(1, 8))
 
-    doc.build(story, canvasmaker
+    doc.build(story, canvasmaker=NumberedCanvas)
+    pdf_buffer.seek(0)
+    return pdf_buffer.getvalue()
+
+if can_print:
+    st.download_button(
+        label="📥 Download Printable PDF Tracker",
+        data=generate_pdf_bytes(),
+        file_name="Qaza_Prayer_Tracker_Printable.pdf",
+        mime="application/pdf",
+        type="primary"
+    )
+else:
+    st.button("📥 Download Printable PDF Tracker", disabled=True, help="Fix the allocation gap above to enable PDF generation.")
