@@ -295,32 +295,29 @@ def generate_pdf_bytes():
     return pdf_buffer.getvalue()
 
 if can_print:
-    # 1. State flag to manage lazy rendering
     if "pdf_ready" not in st.session_state:
         st.session_state.pdf_ready = False
 
-    # 2. Show single action button if PDF isn't staged yet
+    # Button 1: Prepares the PDF binary (Keeps IDM quiet while editing numbers)
     if not st.session_state.pdf_ready:
         if st.button("📄 Generate Printable PDF", type="primary"):
             st.session_state.pdf_ready = True
             st.rerun()
 
-    # 3. Once generated, display the download button AND reset state on click
+    # Button 2: Downloads the actual file instantly in 1 click
     else:
         pdf_bytes = generate_pdf_bytes()
         
-        # Download button triggers IDM only when actively clicked by the user
         st.download_button(
             label="📥 Click to Download PDF",
             data=pdf_bytes,
             file_name="Qaza_Prayer_Tracker_Printable.pdf",
             mime="application/pdf",
-            type="primary",
-            on_click=lambda: st.session_state.update(pdf_ready=False) # Resets so IDM won't trigger on subsequent table edits!
+            type="primary"
         )
         
-        # Optional button to reset back
-        if st.button("🔄 Reset / Make More Edits"):
+        # Reset button if the user wants to go back and edit numbers
+        if st.button("🔄 Done / Edit Numbers Again"):
             st.session_state.pdf_ready = False
             st.rerun()
 
