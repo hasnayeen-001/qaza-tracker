@@ -1,4 +1,5 @@
 import io
+import math
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -15,10 +16,14 @@ st.title("🕋 Automated Qaza Prayer Tracker & Printable Generator")
 st.markdown("Calculate your missed prayers, adjust your overestimation buffer, allocate your lifetime debts, and generate a **print-ready PDF with round-square checkbox grids**.")
 
 # ==========================================
-# SETTINGS & TOGGLES
+# SIDEBAR SETTINGS & TOGGLES
 # ==========================================
 st.sidebar.header("⚙️ Configuration Settings")
-include_witr = st.sidebar.checkbox("Include Witr Prayer (6 Wakts / Day)", value=True, help="In Hanafi jurisprudence, Witr is Wajib and made up alongside Isha.")
+include_witr = st.sidebar.checkbox(
+    "Include Witr Prayer (6 Wakts / Day)", 
+    value=True, 
+    help="In Hanafi jurisprudence, Witr is Wajib and made up alongside Isha."
+)
 wakts_per_day = 6 if include_witr else 5
 
 # ==========================================
@@ -27,29 +32,41 @@ wakts_per_day = 6 if include_witr else 5
 st.header("Step 1: Enter Your Yearly Prayer History")
 st.markdown("Add your prayer history year by year. Enter how many valid days you prayed that year and your average wakts prayed per day.")
 
-# Default data matching user example
 default_data = pd.DataFrame({
     "Year": [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
     "Days": [90, 365, 365, 365, 365, 365, 365, 365, 365],
     "Avg_Wakt_Prayed": [3.5, 3.5, 3.5, 3.5, 3.0, 3.0, 4.0, 4.0, 4.0]
 })
 
-edited_df = st.data_editor(default_data, num_rows="dynamic", key="yearly_input")
+# Lock column creation & prevent extra columns
+edited_df = st.data_editor(
+    default_data, 
+    num_rows="dynamic", 
+    key="yearly_input",
+    column_config={
+        "Year": st.column_config.NumberColumn("Year", min_value=1900, max_value=2100, step=1, format="%d"),
+        "Days": st.column_config.NumberColumn("Valid Days Prayed", min_value=0, max_value=366, step=1),
+        "Avg_Wakt_Prayed": st.column_config.NumberColumn(f"Avg Wakt Prayed (Max {wakts_per_day})", min_value=0.0, max_value=float(wakts_per_day), step=0.1)
+    }
+)
 
-# Safeguard against empty dataframes
+# Safeguard against empty dataframes or NaN cells
 if edited_df is None or len(edited_df) == 0:
-    st.warning("⚠️ Please add at least one year of prayer history above to proceed.")
+    st.warning("⚠️ Please enter at least one valid year in the table above to proceed.")
     st.stop()
 
-# Calculations
-edited_df["Total_Wakt"] = edited_df["Days"] * wakts_per_day
-edited_df["Actual_Prayed"] = edited_df["Days"] * edited_df["Avg_Wakt_Prayed"]
-edited_df["Missed"] = edited_df["Total_Wakt"] - edited_df["Actual_Prayed"]
+# Clean missing/blank values instantly
+cleaned_df = edited_df.fillna(0).copy()
 
-total_obligatory = edited_df["Total_Wakt"].sum()
-total_actual = edited_df["Actual_Prayed"].sum()
-total_missed = edited_df["Missed"].sum()
-num_years = len(edited_df)
+# Calculations with math.ceil rounding to guarantee whole integers
+cleaned_df["Total_Wakt"] = cleaned_df["Days"].apply(lambda x: math.ceil(x * wakts_per_day))
+cleaned_df["Actual_Prayed"] = (cleaned_df["Days"] * cleaned_df["Avg_Wakt_Prayed"]).apply(math.ceil)
+cleaned_df["Missed"] = (cleaned_df["Total_Wakt"] - cleaned_df["Actual_Prayed"]).clip(lower=0).apply(math.ceil)
+
+total_obligatory = int(cleaned_df["Total_Wakt"].sum())
+total_actual = int(cleaned_df["Actual_Prayed"].sum())
+total_missed = int(cleaned_df["Missed"].sum())
+num_years = len(cleaned_df)
 
 st.divider()
 
@@ -59,12 +76,12 @@ st.divider()
 st.header("Step 2: Summary & Overestimated Buffer")
 
 col1, col2, col3 = st.columns(3)
-col1.metric("Total Obligatory Prayers", f"{total_obligatory:,.0f}")
-col2.metric("Total Actual Prayed", f"{total_actual:,.1f}")
-col3.metric("Calculated Missed Prayers", f"{total_missed:,.1f}")
+col1.metric("Total Obligatory Prayers", f"{total_obligatory:,}")
+col2.metric("Total Actual Prayed", f"{total_actual:,}")
+col3.metric("Calculated Missed Prayers", f"{total_missed:,}")
 
 # Default recommended overestimated target (rounded up to nearest 1000)
-default_overestimated = int(np.ceil(total_missed / 1000.0) * 1000)
+default_overestimated = int(math.ceil(total_missed / 1000.0) * 1000) if total_missed > 0 else 1000
 
 st.markdown("### Overestimation & Manual Override")
 st.markdown("To ensure complete spiritual peace of mind, the system suggests rounding up your missed prayers to the nearest 1,000. You can manually edit this amount below if desired.")
@@ -79,10 +96,10 @@ overestimated_target = st.number_input(
 st.divider()
 
 # ==========================================
-# STEP 3: LIFETIME & YEARLY ALLOCATION
+# STEP 3: MANUAL LIFETIME ALLOCATION
 # ==========================================
 st.header("Step 3: Lifetime Prayer Allocation")
-st.markdown(f"Allocate your total target of **{overestimated_target:,} prayers** across your daily prayers. Yearly allocations will be divided automatically across **{num_years} years**.")
+st.markdown(f"Manually allocate your target of **{overestimated_target:,} prayers** across your daily prayers based on your estimation. Yearly allocations will be divided automatically across **{num_years} years**.")
 
 if include_witr:
     col_a, col_b, col_c, col_d, col_e, col_f = st.columns(6)
@@ -103,14 +120,18 @@ else:
     allocations_dict = {'Fazr': alloc_fazr, 'Zuhr': alloc_zuhr, 'Asr': alloc_asr, 'Magrib': alloc_magrib, 'Esha': alloc_esha}
 
 total_allocated = sum(allocations_dict.values())
+allocation_gap = overestimated_target - total_allocated
 
-if total_allocated != overestimated_target:
-    st.warning(f"⚠️ Total allocated ({total_allocated:,}) does not match your Overestimated Target ({overestimated_target:,}). Difference: {overestimated_target - total_allocated:,}")
+# Strict Gap Validation
+if allocation_gap != 0:
+    st.error(f"⚠️ **Allocation Mismatch:** Your allocated total ({total_allocated:,}) does not equal your Overestimated Target ({overestimated_target:,}). Difference: **{allocation_gap:+,} prayers**. Please adjust your manual allocations before printing.")
+    can_print = False
 else:
     st.success("✅ Lifetime allocation matches your target perfectly!")
+    can_print = True
 
-# Yearly split calculation with safety check
-yearly_alloc = {prayer: int(np.ceil(count / num_years)) for prayer, count in allocations_dict.items()}
+# Yearly split calculation with math.ceil
+yearly_alloc = {prayer: math.ceil(count / num_years) for prayer, count in allocations_dict.items()}
 
 # Display allocation summary table
 alloc_summary_df = pd.DataFrame({
@@ -123,10 +144,10 @@ st.table(alloc_summary_df)
 st.divider()
 
 # ==========================================
-# STEP 4: PDF GENERATOR WITH ROUND-SQUARE CHECKBOXES
+# STEP 4: PRINTABLE PDF GENERATOR
 # ==========================================
 st.header("Step 4: Generate Printable PDF Tracker")
-st.markdown("Click below to generate your customized printable PDF. Every year will start on a brand-new page with **round-square checkboxes**.")
+st.markdown(f"Every year starts on a brand-new page with its respective **Year Title Header** and round-square checkboxes. Estimated print length: **{num_years + 1} pages** (1 master page + {num_years} yearly pages).")
 
 def make_rounded_checkbox_grid(count, cols=15):
     cells = []
@@ -166,15 +187,18 @@ def generate_pdf_bytes():
         'SubTitleStyle', parent=styles['Heading2'], fontSize=12, leading=16, alignment=1, textColor=colors.HexColor("#4A5568")
     )
 
-    # Page 1: Summary
+    # Page 1: Master Summary
     story.append(Paragraph("<b>Personal Qaza Prayer Tracker & Master Summary</b>", title_style))
     story.append(Spacer(1, 15))
     
+    min_year = int(cleaned_df['Year'].min()) if not cleaned_df.empty else 2017
+    max_year = int(cleaned_df['Year'].max()) if not cleaned_df.empty else 2025
+
     summary_data = [
         ["Metric / Description", "Value"],
-        ["Total Obligatory Prayers", f"{total_obligatory:,.0f}"],
-        ["Total Actual Prayed", f"{total_actual:,.1f}"],
-        ["Total Missed (Calculated)", f"{total_missed:,.1f}"],
+        ["Total Obligatory Prayers", f"{total_obligatory:,}"],
+        ["Total Actual Prayed", f"{total_actual:,}"],
+        ["Total Missed (Calculated)", f"{total_missed:,}"],
         ["Overestimated Amount (Target)", f"{overestimated_target:,}"]
     ]
     t1 = Table(summary_data, colWidths=[250, 150])
@@ -190,7 +214,7 @@ def generate_pdf_bytes():
     story.append(t1)
     story.append(Spacer(1, 20))
     
-    story.append(Paragraph(f"<b>Lifetime & Yearly Allocation ({num_years} Years: {int(edited_df['Year'].min())} - {int(edited_df['Year'].max())})</b>", subtitle_style))
+    story.append(Paragraph(f"<b>Lifetime & Yearly Allocation ({num_years} Years: {min_year} - {max_year})</b>", subtitle_style))
     story.append(Spacer(1, 10))
     
     alloc_table_data = [["Prayer", "Lifetime Target", "Yearly Allocation"]]
@@ -210,9 +234,10 @@ def generate_pdf_bytes():
     story.append(t2)
     story.append(PageBreak())
 
-    # Yearly Pages with Round-Square Checkboxes
-    years = edited_df['Year'].astype(int).tolist()
+    # Yearly Pages with Year Title Headers
+    years = cleaned_df['Year'].astype(int).tolist()
     for idx, year in enumerate(years):
+        # Header displaying the year title on every page
         story.append(Paragraph(f"<b>Qaza Prayer Tracker — Year {year}</b>", title_style))
         story.append(Spacer(1, 10))
         
@@ -229,15 +254,14 @@ def generate_pdf_bytes():
     pdf_buffer.seek(0)
     return pdf_buffer.getvalue()
 
-if st.button("📥 Generate & Download My Printable PDF", type="primary"):
-    try:
-        pdf_data = generate_pdf_bytes()
-        st.download_button(
-            label="Click Here to Download PDF",
-            data=pdf_data,
-            file_name="Qaza_Prayer_Tracker_Printable.pdf",
-            mime="application/pdf"
-        )
-        st.success("✅ PDF generated successfully! Click the button above to download.")
-    except Exception as e:
-        st.error(f"⚠️ An error occurred while generating the PDF: {e}")
+# Single-click download button or blocked state
+if can_print:
+    st.download_button(
+        label="📥 Download Printable PDF Tracker",
+        data=generate_pdf_bytes(),
+        file_name="Qaza_Prayer_Tracker_Printable.pdf",
+        mime="application/pdf",
+        type="primary"
+    )
+else:
+    st.button("📥 Download Printable PDF Tracker", disabled=True, help="Fix the allocation gap above to enable PDF generation.")
