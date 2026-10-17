@@ -190,7 +190,7 @@ def make_rounded_checkbox_grid(count, cols=15):
         ('BOTTOMPADDING', (0,0), (-1,-1), 2),
         ('TOPPADDING', (0,0), (-1,-1), 2),
     ]))
-return t
+    return t
 
 @st.cache_data
 def generate_pdf_bytes():
