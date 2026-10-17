@@ -17,32 +17,44 @@ st.title("🕋 Automated Qaza Prayer Tracker & Printable Generator")
 st.markdown("Calculate your missed prayers, adjust your overestimation buffer, allocate your lifetime debts across the 5 daily prayers, and generate a **print-ready PDF**.")
 
 # ==========================================
-# STEP 1: MANUAL YEARLY INPUTS
+# STEP 1: YEAR RANGE SELECTOR & HISTORY
 # ==========================================
-st.header("Step 1: Enter Your Yearly Prayer History")
-st.markdown("Add your prayer history year by year. Enter how many valid days you prayed that year and your average wakts prayed per day (out of 5).")
+st.header("Step 1: Select Your Year Range & Prayer History")
+st.markdown("Select your starting year (e.g., year of puberty) and ending year. The system will automatically generate your yearly table.")
 
-default_data = pd.DataFrame({
-    "Year": [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
-    "Days": [90, 365, 365, 365, 365, 365, 365, 365, 365],
-    "Avg_Wakt_Prayed": [3.5, 3.5, 3.5, 3.5, 3.0, 3.0, 4.0, 4.0, 4.0]
-})
+col_yr1, col_yr2 = st.columns(2)
+start_year = col_yr1.number_input("Start Year", min_value=1950, max_value=2030, value=2017, step=1)
+end_year = col_yr2.number_input("End Year", min_value=1950, max_value=2030, value=2025, step=1)
+
+if start_year > end_year:
+    st.error("⚠️ Start Year cannot be later than End Year. Please adjust your range.")
+    st.stop()
+
+# Session State to manage the dynamic year range table smoothly without resetting user edits
+range_key = f"df_{start_year}_{end_year}"
+if range_key not in st.session_state:
+    years = list(range(int(start_year), int(end_year) + 1))
+    st.session_state[range_key] = pd.DataFrame({
+        "Year": years,
+        "Days": [365] * len(years),
+        "Avg_Wakt_Prayed": [3.5] * len(years)
+    })
+
+st.markdown("Enter your valid days prayed and average daily wakts (out of 5) for each year below:")
 
 edited_df = st.data_editor(
-    default_data, 
-    num_rows="dynamic", 
-    key="yearly_input",
+    st.session_state[range_key], 
+    key=f"editor_{range_key}",
+    hide_index=True,
     column_config={
-        "Year": st.column_config.NumberColumn("Year", min_value=1900, max_value=2100, step=1, format="%d"),
+        "Year": st.column_config.NumberColumn("Year", disabled=True, format="%d"),
         "Days": st.column_config.NumberColumn("Valid Days Prayed", min_value=0, max_value=366, step=1),
         "Avg_Wakt_Prayed": st.column_config.NumberColumn("Avg Wakt Prayed (Max 5)", min_value=0.0, max_value=5.0, step=0.1)
     }
 )
 
-if edited_df is None or len(edited_df) == 0:
-    st.warning("⚠️ Please enter at least one valid year in the table above to proceed.")
-    st.stop()
-
+# Update session state with edits
+st.session_state[range_key] = edited_df
 cleaned_df = edited_df.fillna(0).copy()
 
 # Calculations (5 Wakts per day fixed)
@@ -181,14 +193,12 @@ def make_rounded_checkbox_grid(count, cols=15):
 def generate_pdf_bytes():
     pdf_buffer = io.BytesIO()
     
-    # Standard frame layout (A4: 595.27 x 841.89)
     frame = Frame(30, 40, 535, 756, id='normal')
     
-    # Page 1 (Summary) - NO running top header
+    # Page 1 (Summary) - NO running top header line
     summary_template = PageTemplate(id='summary', frames=frame, onPage=lambda c, d: None)
     doc = BaseDocTemplate(pdf_buffer, pagesize=A4, pageTemplates=[summary_template])
 
-    # Pre-register dynamic running headers for every year
     years = cleaned_df['Year'].astype(int).tolist()
     for y in years:
         def make_year_header(year_val):
@@ -216,12 +226,12 @@ def generate_pdf_bytes():
         'SubTitleStyle', parent=styles['Heading2'], fontSize=12, leading=16, alignment=1, textColor=colors.HexColor("#4A5568")
     )
 
-    # Page 1: Master Summary (Clean title without header line)
+    # Page 1: Master Summary
     story.append(Paragraph("<b>Personal Qaza Prayer Tracker & Master Summary</b>", title_style))
     story.append(Spacer(1, 15))
     
-    min_year = int(cleaned_df['Year'].min()) if not cleaned_df.empty else 2017
-    max_year = int(cleaned_df['Year'].max()) if not cleaned_df.empty else 2025
+    min_year = int(cleaned_df['Year'].min()) if not cleaned_df.empty else start_year
+    max_year = int(cleaned_df['Year'].max()) if not cleaned_df.empty else end_year
 
     summary_data = [
         ["Metric / Description", "Value"],
@@ -264,11 +274,8 @@ def generate_pdf_bytes():
 
     # Yearly Tracker Pages
     for year in years:
-        # Crucial: NextPageTemplate must come BEFORE PageBreak to correctly bind to the new page!
         story.append(NextPageTemplate(f'year_{year}'))
         story.append(PageBreak())
-        
-        # Spacer at top so content starts cleanly under the running header
         story.append(Spacer(1, 15))
         
         for prayer, count in yearly_alloc.items():
