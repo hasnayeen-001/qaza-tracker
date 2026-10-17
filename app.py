@@ -291,12 +291,14 @@ def generate_pdf_bytes():
     return pdf_buffer.getvalue()
 
 if can_print:
-    st.download_button(
-        label="📥 Download Printable PDF Tracker",
-        data=generate_pdf_bytes(),
-        file_name="Qaza_Prayer_Tracker_Printable.pdf",
-        mime="application/pdf",
-        type="primary"
-    )
+    if st.button("📄 Prepare Printable PDF", type="primary"):
+        with st.spinner("Generating PDF..."):
+            pdf_data = generate_pdf_bytes()
+            st.download_button(
+                label="📥 Click Here to Download PDF",
+                data=pdf_data,
+                file_name="Qaza_Prayer_Tracker_Printable.pdf",
+                mime="application/pdf"
+            )
 else:
     st.button("📥 Download Printable PDF Tracker", disabled=True, help="Fix the allocation gap above to enable PDF generation.")
