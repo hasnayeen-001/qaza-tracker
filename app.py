@@ -47,7 +47,7 @@ edited_df = st.data_editor(
     column_config={
         "Year": st.column_config.NumberColumn("Year", disabled=True, format="%d"),
         "Days": st.column_config.NumberColumn("Adjusted Days", min_value=0, max_value=366, step=1),
-        "Avg_Wakt_Prayed": st.column_config.NumberColumn("Avg Wakt Prayed (Max 5)", min_value=0.0, max_value=5.0, step=0.1)
+        "Avg_Wakt_Prayed": st.column_config.NumberColumn("Avg Wakt Prayed", min_value=0.0, max_value=5.0, step=0.1)
     }
 )
 
