@@ -190,15 +190,12 @@ def make_rounded_checkbox_grid(count, cols=15):
         ('BOTTOMPADDING', (0,0), (-1,-1), 2),
         ('TOPPADDING', (0,0), (-1,-1), 2),
     ]))
-    return t
+   return t
+
 @st.cache_data
 def generate_pdf_bytes():
     pdf_buffer = io.BytesIO()
-    
-    frame = Frame(30, 40, 535, 756, id='normal')
-def generate_pdf_bytes():
-    pdf_buffer = io.BytesIO()
-    
+
     frame = Frame(30, 40, 535, 756, id='normal')
     
     # Page 1 (Summary) - NO running top header line
@@ -298,13 +295,10 @@ if can_print:
     if "pdf_ready" not in st.session_state:
         st.session_state.pdf_ready = False
 
-    # Stage 1: Prepare PDF (Keeps IDM completely quiet during live editing)
     if not st.session_state.pdf_ready:
         if st.button("📄 Generate Printable PDF", type="primary"):
             st.session_state.pdf_ready = True
             st.rerun()
-
-    # Stage 2: Download PDF (Direct payload delivery)
     else:
         st.download_button(
             label="📥 Download Printable PDF Tracker",
@@ -314,7 +308,6 @@ if can_print:
             type="primary"
         )
         
-        # Simple reset button to go back to editing
         if st.button("✏️ Edit Numbers / Reset PDF"):
             st.session_state.pdf_ready = False
             st.rerun()
