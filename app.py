@@ -295,31 +295,28 @@ def generate_pdf_bytes():
     return pdf_buffer.getvalue()
 
 if can_print:
-    # 1. Flag to hold PDF ready state
-    if "pdf_generated" not in st.session_state:
-        st.session_state.pdf_generated = False
+    if "pdf_ready" not in st.session_state:
+        st.session_state.pdf_ready = False
 
-    # 2. Stage 1: Explicit button to compile PDF without race conditions
-    if not st.session_state.pdf_generated:
-        if st.button("📄 Prepare PDF for Download", type="primary"):
-            with st.spinner("Generating document..."):
-                st.session_state.pdf_bytes = generate_pdf_bytes()
-                st.session_state.pdf_generated = True
-                st.rerun()
+    # Stage 1: Prepare PDF (Keeps IDM completely quiet during live editing)
+    if not st.session_state.pdf_ready:
+        if st.button("📄 Generate Printable PDF", type="primary"):
+            st.session_state.pdf_ready = True
+            st.rerun()
 
-    # 3. Stage 2: Instant, bulletproof 1-click download once compiled
+    # Stage 2: Download PDF (Direct payload delivery)
     else:
         st.download_button(
             label="📥 Download Printable PDF Tracker",
-            data=st.session_state.pdf_bytes,
+            data=generate_pdf_bytes(),
             file_name="Qaza_Prayer_Tracker_Printable.pdf",
             mime="application/pdf",
             type="primary"
         )
         
-        # Reset if user updates table numbers
+        # Simple reset button to go back to editing
         if st.button("✏️ Edit Numbers / Reset PDF"):
-            st.session_state.pdf_generated = False
+            st.session_state.pdf_ready = False
             st.rerun()
 
 else:
