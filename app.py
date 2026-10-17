@@ -14,24 +14,13 @@ from reportlab.pdfgen import canvas
 st.set_page_config(page_title="Qaza Prayer Tracker System", page_icon="🕋", layout="wide")
 
 st.title("🕋 Automated Qaza Prayer Tracker & Printable Generator")
-st.markdown("Calculate your missed prayers, adjust your overestimation buffer, allocate your lifetime debts, and generate a **print-ready PDF with round-square checkbox grids**.")
-
-# ==========================================
-# SIDEBAR SETTINGS & TOGGLES
-# ==========================================
-st.sidebar.header("⚙️ Configuration Settings")
-include_witr = st.sidebar.checkbox(
-    "Include Witr Prayer (6 Wakts / Day)", 
-    value=True, 
-    help="In Hanafi jurisprudence, Witr is Wajib and made up alongside Isha."
-)
-wakts_per_day = 6 if include_witr else 5
+st.markdown("Calculate your missed prayers, adjust your overestimation buffer, allocate your lifetime debts across the 5 daily prayers, and generate a **print-ready PDF**.")
 
 # ==========================================
 # STEP 1: MANUAL YEARLY INPUTS
 # ==========================================
 st.header("Step 1: Enter Your Yearly Prayer History")
-st.markdown("Add your prayer history year by year. Enter how many valid days you prayed that year and your average wakts prayed per day.")
+st.markdown("Add your prayer history year by year. Enter how many valid days you prayed that year and your average wakts prayed per day (out of 5).")
 
 default_data = pd.DataFrame({
     "Year": [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
@@ -39,7 +28,6 @@ default_data = pd.DataFrame({
     "Avg_Wakt_Prayed": [3.5, 3.5, 3.5, 3.5, 3.0, 3.0, 4.0, 4.0, 4.0]
 })
 
-# Lock column creation & prevent extra columns
 edited_df = st.data_editor(
     default_data, 
     num_rows="dynamic", 
@@ -47,20 +35,19 @@ edited_df = st.data_editor(
     column_config={
         "Year": st.column_config.NumberColumn("Year", min_value=1900, max_value=2100, step=1, format="%d"),
         "Days": st.column_config.NumberColumn("Valid Days Prayed", min_value=0, max_value=366, step=1),
-        "Avg_Wakt_Prayed": st.column_config.NumberColumn(f"Avg Wakt Prayed (Max {wakts_per_day})", min_value=0.0, max_value=float(wakts_per_day), step=0.1)
+        "Avg_Wakt_Prayed": st.column_config.NumberColumn("Avg Wakt Prayed (Max 5)", min_value=0.0, max_value=5.0, step=0.1)
     }
 )
 
-# Safeguard against empty dataframes or NaN cells
+# Safeguard against empty dataframes
 if edited_df is None or len(edited_df) == 0:
     st.warning("⚠️ Please enter at least one valid year in the table above to proceed.")
     st.stop()
 
-# Clean missing/blank values instantly
 cleaned_df = edited_df.fillna(0).copy()
 
-# Calculations with math.ceil rounding to guarantee whole integers
-cleaned_df["Total_Wakt"] = cleaned_df["Days"].apply(lambda x: math.ceil(x * wakts_per_day))
+# Calculations (5 Wakts per day fixed)
+cleaned_df["Total_Wakt"] = cleaned_df["Days"].apply(lambda x: math.ceil(x * 5))
 cleaned_df["Actual_Prayed"] = (cleaned_df["Days"] * cleaned_df["Avg_Wakt_Prayed"]).apply(math.ceil)
 cleaned_df["Missed"] = (cleaned_df["Total_Wakt"] - cleaned_df["Actual_Prayed"]).clip(lower=0).apply(math.ceil)
 
@@ -81,7 +68,6 @@ col1.metric("Total Obligatory Prayers", f"{total_obligatory:,}")
 col2.metric("Total Actual Prayed", f"{total_actual:,}")
 col3.metric("Calculated Missed Prayers", f"{total_missed:,}")
 
-# Default recommended overestimated target (rounded up to nearest 1000)
 default_overestimated = int(math.ceil(total_missed / 1000.0) * 1000) if total_missed > 0 else 1000
 
 st.markdown("### Overestimation & Manual Override")
@@ -97,28 +83,25 @@ overestimated_target = st.number_input(
 st.divider()
 
 # ==========================================
-# STEP 3: MANUAL LIFETIME ALLOCATION
+# STEP 3: MANUAL LIFETIME ALLOCATION (5 WAKTS)
 # ==========================================
-st.header("Step 3: Lifetime Prayer Allocation")
-st.markdown(f"Manually allocate your target of **{overestimated_target:,} prayers** across your daily prayers based on your estimation. Yearly allocations will be divided automatically across **{num_years} years**.")
+st.header("Step 3: Lifetime 5-Wakt Allocation")
+st.markdown(f"Manually allocate your target of **{overestimated_target:,} prayers** across the 5 daily prayers based on your estimation. Yearly allocations will be divided automatically across **{num_years} years**.")
 
-if include_witr:
-    col_a, col_b, col_c, col_d, col_e, col_f = st.columns(6)
-    alloc_fazr = col_a.number_input("Fazr", min_value=0, value=int(overestimated_target * 0.40))
-    alloc_zuhr = col_b.number_input("Zuhr", min_value=0, value=int(overestimated_target * 0.12))
-    alloc_asr = col_c.number_input("Asr", min_value=0, value=int(overestimated_target * 0.12))
-    alloc_magrib = col_d.number_input("Magrib", min_value=0, value=int(overestimated_target * 0.12))
-    alloc_esha = col_e.number_input("Esha", min_value=0, value=int(overestimated_target * 0.12))
-    alloc_witr = col_f.number_input("Witr", min_value=0, value=int(overestimated_target * 0.12))
-    allocations_dict = {'Fazr': alloc_fazr, 'Zuhr': alloc_zuhr, 'Asr': alloc_asr, 'Magrib': alloc_magrib, 'Esha': alloc_esha, 'Witr': alloc_witr}
-else:
-    col_a, col_b, col_c, col_d, col_e = st.columns(5)
-    alloc_fazr = col_a.number_input("Fazr", min_value=0, value=int(overestimated_target * 0.48))
-    alloc_zuhr = col_b.number_input("Zuhr", min_value=0, value=int(overestimated_target * 0.13))
-    alloc_asr = col_c.number_input("Asr", min_value=0, value=int(overestimated_target * 0.13))
-    alloc_magrib = col_d.number_input("Magrib", min_value=0, value=int(overestimated_target * 0.13))
-    alloc_esha = col_e.number_input("Esha", min_value=0, value=int(overestimated_target * 0.13))
-    allocations_dict = {'Fazr': alloc_fazr, 'Zuhr': alloc_zuhr, 'Asr': alloc_asr, 'Magrib': alloc_magrib, 'Esha': alloc_esha}
+col_a, col_b, col_c, col_d, col_e = st.columns(5)
+alloc_fazr = col_a.number_input("Fazr", min_value=0, value=int(overestimated_target * 0.48))
+alloc_zuhr = col_b.number_input("Zuhr", min_value=0, value=int(overestimated_target * 0.13))
+alloc_asr = col_c.number_input("Asr", min_value=0, value=int(overestimated_target * 0.13))
+alloc_magrib = col_d.number_input("Magrib", min_value=0, value=int(overestimated_target * 0.13))
+alloc_esha = col_e.number_input("Esha", min_value=0, value=int(overestimated_target * 0.13))
+
+allocations_dict = {
+    'Fazr': alloc_fazr, 
+    'Zuhr': alloc_zuhr, 
+    'Asr': alloc_asr, 
+    'Magrib': alloc_magrib, 
+    'Esha': alloc_esha
+}
 
 total_allocated = sum(allocations_dict.values())
 allocation_gap = overestimated_target - total_allocated
@@ -131,10 +114,8 @@ else:
     st.success("✅ Lifetime allocation matches your target perfectly!")
     can_print = True
 
-# Yearly split calculation with math.ceil
 yearly_alloc = {prayer: math.ceil(count / num_years) for prayer, count in allocations_dict.items()}
 
-# Display allocation summary table
 alloc_summary_df = pd.DataFrame({
     "Prayer": list(allocations_dict.keys()) + ["Total"],
     "Lifetime Target": list(allocations_dict.values()) + [total_allocated],
@@ -148,13 +129,14 @@ st.divider()
 # STEP 4: PRINTABLE PDF GENERATOR
 # ==========================================
 st.header("Step 4: Generate Printable PDF Tracker")
-st.markdown(f"Every year starts on a brand-new page with its respective **Year Title Header** and round-square checkboxes.")
+st.markdown(f"Every year starts on a brand-new page featuring its exact **Year Title Header** and round-square checkboxes.")
 
 class YearlyHeaderCanvas(canvas.Canvas):
-    """Custom canvas to generate persistent running headers and footers on every page."""
+    """Dynamic canvas that prints the exact year running header on every page."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._saved_page_states = []
+        self._page_years = [] # Map page numbers to year titles if needed
 
     def showPage(self):
         self._saved_page_states.append(dict(self.__dict__))
@@ -182,7 +164,6 @@ class YearlyHeaderCanvas(canvas.Canvas):
         self.setFillColor(colors.HexColor("#718096"))
         self.drawRightString(565, 20, f"Page {self._pageNumber} of {page_count}")
         
-        # Divider line
         self.setStrokeColor(colors.HexColor("#CBD5E0"))
         self.setLineWidth(0.5)
         self.line(30, 805, 565, 805)
@@ -214,7 +195,6 @@ def make_rounded_checkbox_grid(count, cols=15):
 
 def generate_pdf_bytes():
     pdf_buffer = io.BytesIO()
-    # Increased topMargin to 45 to give breathing room for the running header
     doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=45, bottomMargin=40)
     story = []
     styles = getSampleStyleSheet()
@@ -273,7 +253,7 @@ def generate_pdf_bytes():
     story.append(t2)
     story.append(PageBreak())
 
-    # Yearly Pages with Year Title Headers
+    # Yearly Pages with prominent Year Title Headers
     years = cleaned_df['Year'].astype(int).tolist()
     for idx, year in enumerate(years):
         story.append(Paragraph(f"<b>Qaza Prayer Tracker — Year {year}</b>", title_style))
@@ -288,7 +268,6 @@ def generate_pdf_bytes():
         if idx < len(years) - 1:
             story.append(PageBreak())
 
-    # Build with the custom running header canvas
     doc.build(story, canvasmaker=YearlyHeaderCanvas)
     pdf_buffer.seek(0)
     return pdf_buffer.getvalue()
