@@ -75,4 +75,4 @@ This app runs entirely locally or in your private session. No personal prayer da
 
 ## 📄 License
 
-This project is open-source and available under the [MIT License](LICENSE).
+This project is open-source.
