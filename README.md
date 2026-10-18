@@ -5,13 +5,13 @@
 
 A clean, privacy-focused Streamlit web application designed for non-coders and individuals looking to calculate, adjust, and track their missed (*Qaza*) obligatory prayers over a lifetime or customized multi-year range.
 
-The system calculates missed prayers, applies a customizable **Safety Margin**, divides obligations across the 5 daily Islamic prayers using standard international nomenclature (**Fajr, Zuhr, Asr, Maghrib, Isha**), and generates a print-ready, high-quality **ReportLab PDF** equipped with custom rounded-corner checkbox grids.
+The system calculates missed prayers, applies a customizable **Safety Margin**, divides obligations across the 5 daily Islamic prayers (**Fajr, Zuhr, Asr, Maghrib, Isha**), and generates a print-ready, high-quality **ReportLab PDF** equipped with custom rounded-corner checkbox grids.
 
 ## 🌟 Key Features
 
 * **Dynamic Year Range Selector:** Input your starting year (e.g., year of puberty) and ending year (e.g., current year) to generate an interactive history grid.
 
-* **Non-Judgmental Terminology:** Uses refined, intuitive labels such as **Adjusted Days** (accounting for exemptions or puberty start dates) and **Safety Margin**.
+* **Intuitive Terminology:** Uses refined, intuitive labels such as **Adjusted Days** (accounting for exemptions or puberty start dates) and **Safety Margin**.
 
 * **Flexible Lifetime Allocation:** Allows manual distribution of missed prayers across the 5 daily prayers to reflect individual habits (e.g., assigning higher counts to Fajr).
 
