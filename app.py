@@ -23,8 +23,8 @@ st.header("Step 1: Select Your Year Range & Prayer History")
 st.markdown("Select your starting year (e.g., year of puberty) and ending year. The system will automatically generate your yearly table. *(Tip: The years are locked automatically, but you can freely click and type into the **Adjusted Days** and **Avg Wakt** columns).*")
 
 col_yr1, col_yr2 = st.columns(2)
-start_year = col_yr1.number_input("Start Year", min_value=1950, max_value=2030, value=2017, step=1)
-end_year = col_yr2.number_input("End Year", min_value=1950, max_value=2030, value=2025, step=1)
+start_year = col_yr1.number_input("Start Year", min_value=1900, max_value=3000, value=2017, step=1)
+end_year = col_yr2.number_input("End Year", min_value=1900, max_value=3000, value=2026, step=1)
 
 if start_year > end_year:
     st.error("⚠️ Start Year cannot be later than End Year. Please adjust your range.")
@@ -34,10 +34,23 @@ if start_year > end_year:
 range_key = f"df_{start_year}_{end_year}"
 if range_key not in st.session_state:
     years = list(range(int(start_year), int(end_year) + 1))
+    
+    # Define exact default days (150 for the first year, 365 for the rest)
+    default_days = [150] + [365] * (len(years) - 1) if len(years) > 1 else [150]
+    
+    # Define exact default Avg Wakt Prayed values matching your list
+    default_avg = [3.5, 3.5, 3.5, 3.5, 3.0, 3.0, 4.0, 4.0, 4.0, 4.0]
+    
+    # Safely pad or slice if the year length changes
+    if len(years) <= len(default_avg):
+        table_avg = default_avg[:len(years)]
+    else:
+        table_avg = default_avg + [4.0] * (len(years) - len(default_avg))
+
     st.session_state[range_key] = pd.DataFrame({
         "Year": years,
-        "Days": [365] * len(years),
-        "Avg_Wakt_Prayed": [3.5] * len(years)
+        "Days": default_days,
+        "Avg_Wakt_Prayed": table_avg
     })
 
 edited_df = st.data_editor(
