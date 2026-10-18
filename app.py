@@ -39,7 +39,7 @@ if range_key not in st.session_state:
     default_days = [150] + [365] * (len(years) - 1) if len(years) > 1 else [150]
     
     # Define exact default Avg Wakt Prayed values matching your list
-    default_avg = [3.5, 3.5, 3.5, 3.5, 3.0, 3.0, 4.0, 4.0, 4.0, 4.0]
+    default_avg = [3.0, 3.0, 3.0, 3.5, 3.5, 3.5, 4.0, 4.0, 4.0, 4.0]
     
     # Safely pad or slice if the year length changes
     if len(years) <= len(default_avg):
