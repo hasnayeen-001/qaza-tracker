@@ -206,7 +206,7 @@ def make_rounded_checkbox_grid(count, cols=15):
     return t
 
 @st.cache_data
-def generate_pdf_bytes(df):  # <--- Notice the (df) here
+def generate_pdf_bytes(df):
     pdf_buffer = io.BytesIO()
 
     frame = Frame(30, 40, 535, 756, id='normal')
@@ -215,20 +215,8 @@ def generate_pdf_bytes(df):  # <--- Notice the (df) here
     summary_template = PageTemplate(id='summary', frames=frame, onPage=lambda c, d: None)
     doc = BaseDocTemplate(pdf_buffer, pagesize=A4, pageTemplates=[summary_template])
 
-    # Make sure to use 'df' here instead of 'cleaned_df'
+    # Dynamically build year templates using the passed dataframe parameter (df)
     years = df['Year'].astype(int).tolist()
-    for y in years:
-        # Your actual year loop code goes right here (no placeholder comments!)
-        def make_year_header(year_val):
-            def draw_header(canvas_obj, doc_obj):
-                canvas_obj.saveState()
-                # ... rest of your drawing code
-    
-    # Page 1 (Summary) - NO running top header line
-    summary_template = PageTemplate(id='summary', frames=frame, onPage=lambda c, d: None)
-    doc = BaseDocTemplate(pdf_buffer, pagesize=A4, pageTemplates=[summary_template])
-
-    years = cleaned_df['Year'].astype(int).tolist()
     for y in years:
         def make_year_header(year_val):
             def draw_header(canvas_obj, doc_obj):
@@ -259,8 +247,8 @@ def generate_pdf_bytes(df):  # <--- Notice the (df) here
     story.append(Paragraph("<b>Personal Qaza Prayer Tracker & Master Summary</b>", title_style))
     story.append(Spacer(1, 15))
     
-    min_year = int(cleaned_df['Year'].min()) if not cleaned_df.empty else start_year
-    max_year = int(cleaned_df['Year'].max()) if not cleaned_df.empty else end_year
+    min_year = int(df['Year'].min()) if not df.empty else start_year
+    max_year = int(df['Year'].max()) if not df.empty else end_year
 
     summary_data = [
         ["Metric / Description", "Value"],
