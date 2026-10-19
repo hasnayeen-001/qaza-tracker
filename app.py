@@ -206,7 +206,7 @@ def make_rounded_checkbox_grid(count, cols=15):
     return t
 
 @st.cache_data
-def generate_pdf_bytes(df):
+def generate_pdf_bytes(df, total_obligatory, total_actual, total_missed, overestimated_target, allocations_dict, yearly_alloc, num_years):
     pdf_buffer = io.BytesIO()
 
     frame = Frame(30, 40, 535, 756, id='normal')
@@ -215,7 +215,6 @@ def generate_pdf_bytes(df):
     summary_template = PageTemplate(id='summary', frames=frame, onPage=lambda c, d: None)
     doc = BaseDocTemplate(pdf_buffer, pagesize=A4, pageTemplates=[summary_template])
 
-    # Dynamically build year templates using the passed dataframe parameter (df)
     years = df['Year'].astype(int).tolist()
     for y in years:
         def make_year_header(year_val):
@@ -247,8 +246,8 @@ def generate_pdf_bytes(df):
     story.append(Paragraph("<b>Personal Qaza Prayer Tracker & Master Summary</b>", title_style))
     story.append(Spacer(1, 15))
     
-    min_year = int(df['Year'].min()) if not df.empty else start_year
-    max_year = int(df['Year'].max()) if not df.empty else end_year
+    min_year = int(df['Year'].min()) if not df.empty else 2017
+    max_year = int(df['Year'].max()) if not df.empty else 2026
 
     summary_data = [
         ["Metric / Description", "Value"],
@@ -308,7 +307,16 @@ def generate_pdf_bytes(df):
 if can_print:
     st.download_button(
         label="📥 Download Printable PDF Tracker",
-        data=generate_pdf_bytes(cleaned_df),  # <--- Pass cleaned_df here
+        data=generate_pdf_bytes(
+            cleaned_df, 
+            total_obligatory, 
+            total_actual, 
+            total_missed, 
+            overestimated_target, 
+            allocations_dict, 
+            yearly_alloc, 
+            num_years
+        ),
         file_name="Qaza_Prayer_Tracker_Printable.pdf",
         mime="application/pdf",
         type="primary"
