@@ -254,7 +254,7 @@
         
         let idx = 0;
         for (let y = start; y <= end; y++) {
-            let days = (y === start && start === 2017) ? 150 : 365;
+            let days = (y === start && start === 2020) ? 150 : 365;
             let avg = defaultAvg[idx] !== undefined ? defaultAvg[idx] : 4.0;
             yearlyData.push({ year: y, days: days, avg: avg });
             idx++;
