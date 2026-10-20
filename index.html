@@ -172,11 +172,11 @@
         <div class="row">
             <div class="col">
                 <label for="startYear">Start Year (1900–2300)</label>
-                <input type="number" id="startYear" value="2020" min="1900" max="2300" onchange="validateYearInputs(); initTable();" oninput="validateYearInputs();">
+                <input type="number" id="startYear" value="2020" min="1900" max="2300" onchange="initTable()">
             </div>
             <div class="col">
                 <label for="endYear">End Year (1900–2300)</label>
-                <input type="number" id="endYear" value="2026" min="1900" max="2300" onchange="validateYearInputs(); initTable();" oninput="validateYearInputs();">
+                <input type="number" id="endYear" value="2026" min="1900" max="2300" onchange="initTable()">
             </div>
         </div>
 
@@ -201,7 +201,7 @@
 
         <p style="margin-top: 15px;">To ensure complete spiritual peace of mind, the system suggests rounding up your missed prayers to the nearest 1,000.</p>
         <label for="safetyTarget">Final Safety Target (Wakts)</label>
-        <input type="number" id="safetyTarget" value="5000" min="0" step="500" oninput="updateAllocationsFromTarget()">
+        <input type="number" id="safetyTarget" value="5000" min="0" step="500" onchange="updateAllocationsFromTarget()">
 
         <!-- STEP 3 -->
         <h2>Step 3: Lifetime 5-Wakt Allocation</h2>
@@ -247,13 +247,9 @@
         let start = parseInt(startElem.value);
         let end = parseInt(endElem.value);
 
-        if (isNaN(start)) start = 1900;
-        if (isNaN(end)) end = 2300;
-
-        // Clamp year values strictly between 1900 and 2300
-        if (start < 1900) start = 1900;
+        if (isNaN(start) || start < 1900) start = 1900;
         if (start > 2300) start = 2300;
-        if (end < 1900) end = 1900;
+        if (isNaN(end) || end < 1900) end = 1900;
         if (end > 2300) end = 2300;
 
         startElem.value = start;
@@ -289,8 +285,8 @@
         yearlyData.forEach((row, index) => {
             html += `<tr>
                 <td>${row.year}</td>
-                <td><input type="number" value="${row.days}" min="0" max="366" onchange="updateRowData(${index}, 'days', this)" oninput="updateRowData(${index}, 'days', this)"></td>
-                <td><input type="number" value="${row.avg}" min="0" max="5" step="0.1" onchange="updateRowData(${index}, 'avg', this)" oninput="updateRowData(${index}, 'avg', this)"></td>
+                <td><input type="number" value="${row.days}" min="0" max="366" onchange="updateRowData(${index}, 'days', this)"></td>
+                <td><input type="number" value="${row.avg}" min="0" max="5" step="0.1" onchange="updateRowData(${index}, 'avg', this)"></td>
             </tr>`;
         });
         html += `</tbody></table>`;
@@ -301,7 +297,7 @@
         let val = parseFloat(inputElem.value);
         if (isNaN(val)) val = 0;
 
-        // Strict Clamping Rules
+        // Strict Clamping Rules upon committing value
         if (field === 'days') {
             if (val < 0) val = 0;
             if (val > 366) val = 366;
@@ -345,7 +341,7 @@
         calculateAllocations(false);
     }
 
-    document.getElementById('safetyTarget').addEventListener('input', () => {
+    document.getElementById('safetyTarget').addEventListener('change', () => {
         window.userModifiedSafety = true;
         updateAllocationsFromTarget();
     });
