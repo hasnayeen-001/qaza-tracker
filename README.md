@@ -18,7 +18,7 @@ The system calculates missed prayers, applies a customizable **Safety Margin**, 
 
    * Choose your starting and ending years. **(Mandatory)**
 
-   * Edit the **Adjusted Days** column (default 365) and **Avg Wakt Prayed** column (0.0 to 5.0) for each year. **(Optional - For more accuracy, You should edit this section))**
+   * Edit the **Adjusted Days** column (default 365) and **Avg Wakt Prayed** column (0.0 to 5.0) for each year. **(Optional - For more accuracy, you should edit this section))**
 
 **Step 2: Review Summary & Set Safety Margin**
 
