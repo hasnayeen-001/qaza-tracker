@@ -126,7 +126,7 @@
             #printReport { display: block !important; }
             .page-break { page-break-before: always; }
             
-            /* Ensures headers repeat at the top of every printed page */
+            /* Repeat table header on every printed page split */
             .repeat-header { 
                 display: table-header-group; 
             }
@@ -135,7 +135,7 @@
                 width: 100%;
                 border-collapse: collapse;
                 border: none !important;
-                margin-bottom: 15px;
+                margin-bottom: 20px;
             }
             .print-table td {
                 border: none !important;
@@ -163,7 +163,7 @@
 
 <div class="container">
     <div class="no-print">
-        <h1>🕋 Automated Qaza Prayer Tracker & Printable Generator</h1>
+        <h1>🕋 Personal Habit & Recovery Tracker System</h1>
         <p>Calculate your missed prayers, adjust your safety margin, allocate your lifetime debts across the 5 daily prayers, and generate a print-ready document.</p>
 
         <!-- STEP 1 -->
@@ -422,41 +422,40 @@
                 yearlyAllocMap[p] = Math.ceil(c / numYears);
             }
 
-            // Wrapping the entire year inside a single table with a repeating <thead class="repeat-header">
-            reportHTML += `<div class="page-break" style="padding: 10px; page-break-before: always;">
+            reportHTML += `<div class="page-break" style="padding: 10px; page-break-before: always;">`;
+            
+            // Generate a table block per prayer where the thead contains BOTH the Year and Wakt Initial.
+            // This ensures BOTH headers repeat if a prayer grid breaks across multiple paper pages.
+            for(let [prayer, count] of Object.entries(yearlyAllocMap)) {
+                let initLetter = initialMap[prayer];
+                
+                reportHTML += `
                 <table class="print-table">
                     <thead class="repeat-header">
                         <tr>
                             <td>
-                                <h2 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin: 0 0 15px 0; background: #FFF;">${row.year}</h2>
+                                <h2 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin: 0 0 6px 0; background: #FFF;">${row.year}</h2>
+                                <b style="font-size: 14px; color: #2D3748; display: block; margin-bottom: 8px; background: #FFF;">${initLetter} (Target: ${count})</b>
                             </td>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>`;
-            
-            for(let [prayer, count] of Object.entries(yearlyAllocMap)) {
-                let initLetter = initialMap[prayer];
-                
-                reportHTML += `
-                <div style="margin-bottom: 10px;">
-                    <b style="font-size: 14px; color: #2D3748; display: block; margin-bottom: 4px;">${initLetter} (Target: ${count})</b>
-                    <div class="checkbox-grid">`;
+                            <td>
+                                <div class="checkbox-grid">`;
                 
                 for(let i = 1; i <= count; i++) {
                     reportHTML += `<div class="checkbox-box"></div>`;
                 }
                 
                 reportHTML += `</div>
-                </div>`;
-            }
-
-            reportHTML += `</td>
+                            </td>
                         </tr>
                     </tbody>
-                </table>
-            </div>`;
+                </table>`;
+            }
+
+            reportHTML += `</div>`;
         });
 
         document.getElementById('printReport').innerHTML = reportHTML;
