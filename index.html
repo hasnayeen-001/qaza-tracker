@@ -126,21 +126,20 @@
             #printReport { display: block !important; }
             .page-break { page-break-before: always; }
             
-            .repeat-header { display: table-header-group; }
+            /* Repeat table headers at the top of every printed page */
+            .repeat-header { 
+                display: table-header-group; 
+            }
+
             .print-table {
                 width: 100%;
                 border-collapse: collapse;
                 border: none !important;
+                margin-bottom: 15px;
             }
             .print-table td {
                 border: none !important;
                 padding: 0 !important;
-            }
-
-            .prayer-block {
-                page-break-inside: avoid;
-                break-inside: avoid;
-                margin-bottom: 15px;
             }
         }
 
@@ -149,6 +148,7 @@
             grid-template-columns: repeat(15, 1fr);
             gap: 4px;
             margin-top: 6px;
+            margin-bottom: 15px;
         }
         .checkbox-box {
             width: 14px;
@@ -156,20 +156,6 @@
             border: 1px solid #4A5568;
             border-radius: 3px;
             display: inline-block;
-        }
-
-        .note-card {
-            background: #F7FAFC;
-            border-left: 4px solid var(--primary);
-            padding: 20px;
-            border-radius: 6px;
-            line-height: 1.6;
-        }
-        .note-card blockquote {
-            margin: 0 0 15px 0;
-            font-style: italic;
-            color: var(--secondary);
-            font-weight: 600;
         }
     </style>
 </head>
@@ -246,7 +232,6 @@
 <script>
     let yearlyData = [];
 
-    // Abbreviated Initial Map
     const initialMap = {
         'Fajr': 'F',
         'Zuhr': 'Z',
@@ -396,7 +381,7 @@
     }
 
     function buildPrintReportHTML(target, allocations, numYears) {
-        // Page 1: Custom Final Draft Note
+        // Page 1: Personal Accountability & Spiritual Recovery Note
         let reportHTML = `
             <div style="font-family: sans-serif; padding: 20px 10px;">
                 <h2 style="text-align: center; color: #1A365D; margin-bottom: 20px;">🕋 Personal Accountability & Spiritual Recovery Note</h2>
@@ -438,34 +423,38 @@
             }
 
             reportHTML += `<div class="page-break" style="padding: 10px; page-break-before: always;">
+                <h2 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin: 0 0 15px 0;">${row.year}</h2>`;
+            
+            for(let [prayer, count] of Object.entries(yearlyAllocMap)) {
+                let initLetter = initialMap[prayer];
+                
+                // Each prayer is wrapped in its own table with a repeating header
+                reportHTML += `
                 <table class="print-table">
                     <thead class="repeat-header">
                         <tr>
                             <td>
-                                <h2 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin: 0 0 15px 0;">${row.year}</h2>
+                                <b style="font-size: 14px; color: #2D3748; display: block; background: #FFF; padding-bottom: 4px;">${initLetter} (Target: ${count})</b>
                             </td>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>`;
-            
-            for(let [prayer, count] of Object.entries(yearlyAllocMap)) {
-                let initLetter = initialMap[prayer];
-                reportHTML += `<div class="prayer-block">
-                    <b style="font-size: 14px; color: #2D3748;">${initLetter} (Target: ${count})</b>
-                    <div class="checkbox-grid">`;
+                            <td>
+                                <div class="checkbox-grid">`;
+                
                 for(let i = 1; i <= count; i++) {
                     reportHTML += `<div class="checkbox-box"></div>`;
                 }
-                reportHTML += `</div></div>`;
-            }
-
-            reportHTML += `</td>
+                
+                reportHTML += `</div>
+                            </td>
                         </tr>
                     </tbody>
-                </table>
-            </div>`;
+                </table>`;
+            }
+
+            reportHTML += `</div>`;
         });
 
         document.getElementById('printReport').innerHTML = reportHTML;
