@@ -7,7 +7,7 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, NextPageTemplate, PageBreak, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, NextPageTemplate, PageBreak, Paragraph, Spacer, Table, TableStyle, KeepTogether
 from reportlab.pdfgen import canvas
 
 # Page Configuration
@@ -217,7 +217,6 @@ def make_rounded_checkbox_grid(count, cols=15):
 def generate_pdf_bytes(df, overestimated_target, allocations_dict, yearly_alloc, num_years):
     pdf_buffer = io.BytesIO()
 
-    # Local initial mapping inside the function scope to avoid NameError
     initial_map_local = {
         'Fajr': 'F',
         'Zuhr': 'Z',
@@ -301,18 +300,10 @@ def generate_pdf_bytes(df, overestimated_target, allocations_dict, yearly_alloc,
             init_letter = initial_map_local[prayer]
             grid_table = make_rounded_checkbox_grid(count, cols=15)
             
-            # Use ReportLab Table repeatRows=1 to repeat both year header and section label if spilling pages
             header_para = Paragraph(f"<b>{init_letter} (Target: {count})</b>", ParagraphStyle('PH', parent=styles['Heading3'], fontSize=11, textColor=colors.HexColor("#2D3748")))
             
-            section_table = Table([[header_para], [grid_table]], colWidths=[535], repeatRows=1)
-            section_table.setStyle(TableStyle([
-                ('TOPPADDING', (0,0), (-1,-1), 2),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 4),
-                ('LEFTPADDING', (0,0), (-1,-1), 0),
-                ('RIGHTPADDING', (0,0), (-1,-1), 0),
-            ]))
-            story.append(section_table)
-            story.append(Spacer(1, 8))
+            # Using KeepTogether to keep the prayer title glued to its grid without triggering layout nesting errors
+            story.append(KeepTogether([header_para, Spacer(1, 4), grid_table, Spacer(1, 8)]))
 
     doc.build(story, canvasmaker=NumberedCanvas)
     pdf_buffer.seek(0)
