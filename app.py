@@ -11,7 +11,7 @@ from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, NextPageTem
 from reportlab.pdfgen import canvas
 
 # Page Configuration
-st.set_page_config(page_title="Qaza Prayer Tracker System", page_icon="🕋", layout="wide")
+st.set_page_config(page_title="Personal Habit & Recovery Tracker System", page_icon="🕋", layout="wide")
 
 st.title("🕋 Automated Qaza Prayer Tracker & Printable Generator")
 st.markdown("Calculate your missed prayers, adjust your **safety margin**, allocate your lifetime debts across the 5 daily prayers, and generate a **print-ready PDF**.")
@@ -111,11 +111,11 @@ st.header("Step 3: Lifetime 5-Wakt Allocation")
 st.markdown(f"Manually allocate your target of **{overestimated_target:,} prayers** across the 5 daily prayers based on your estimation. Yearly allocations will be divided automatically across **{num_years} years**.")
 
 col_a, col_b, col_c, col_d, col_e = st.columns(5)
-alloc_fajr = col_a.number_input("Fajr", min_value=0, value=int(overestimated_target * 0.48))
-alloc_zuhr = col_b.number_input("Zuhr", min_value=0, value=int(overestimated_target * 0.13))
-alloc_asr = col_c.number_input("Asr", min_value=0, value=int(overestimated_target * 0.13))
-alloc_maghrib = col_d.number_input("Maghrib", min_value=0, value=int(overestimated_target * 0.13))
-alloc_isha = col_e.number_input("Isha", min_value=0, value=int(overestimated_target * 0.13))
+alloc_fajr = col_a.number_input("Fajr (F)", min_value=0, value=int(overestimated_target * 0.48))
+alloc_zuhr = col_b.number_input("Zuhr (Z)", min_value=0, value=int(overestimated_target * 0.13))
+alloc_asr = col_c.number_input("Asr (A)", min_value=0, value=int(overestimated_target * 0.13))
+alloc_maghrib = col_d.number_input("Maghrib (M)", min_value=0, value=int(overestimated_target * 0.13))
+alloc_isha = col_e.number_input("Isha (I)", min_value=0, value=int(overestimated_target * 0.13))
 
 allocations_dict = {
     'Fajr': alloc_fajr, 
@@ -123,6 +123,14 @@ allocations_dict = {
     'Asr': alloc_asr, 
     'Maghrib': alloc_maghrib, 
     'Isha': alloc_isha
+}
+
+initial_map = {
+    'Fajr': 'F',
+    'Zuhr': 'Z',
+    'Asr': 'A',
+    'Maghrib': 'M',
+    'Isha': 'I'
 }
 
 total_allocated = sum(allocations_dict.values())
@@ -138,7 +146,7 @@ else:
 yearly_alloc = {prayer: math.ceil(count / num_years) for prayer, count in allocations_dict.items()}
 
 alloc_summary_df = pd.DataFrame({
-    "Prayer": list(allocations_dict.keys()) + ["Total"],
+    "Wakt": [f"{p} ({initial_map[p]})" for p in allocations_dict.keys()] + ["Total"],
     "Lifetime Target": list(allocations_dict.values()) + [total_allocated],
     "Yearly Allocation": list(yearly_alloc.values()) + [sum(yearly_alloc.values())]
 })
@@ -206,12 +214,12 @@ def make_rounded_checkbox_grid(count, cols=15):
     return t
 
 @st.cache_data
-def generate_pdf_bytes(df, total_obligatory, total_actual, total_missed, overestimated_target, allocations_dict, yearly_alloc, num_years):
+def generate_pdf_bytes(df, overestimated_target, allocations_dict, yearly_alloc, num_years):
     pdf_buffer = io.BytesIO()
 
     frame = Frame(30, 40, 535, 756, id='normal')
     
-    # Page 1 (Summary) - NO running top header line
+    # Page 1 (Summary/Note) - NO running top header line
     summary_template = PageTemplate(id='summary', frames=frame, onPage=lambda c, d: None)
     doc = BaseDocTemplate(pdf_buffer, pagesize=A4, pageTemplates=[summary_template])
 
@@ -220,9 +228,9 @@ def generate_pdf_bytes(df, total_obligatory, total_actual, total_missed, overest
         def make_year_header(year_val):
             def draw_header(canvas_obj, doc_obj):
                 canvas_obj.saveState()
-                canvas_obj.setFont("Helvetica-Bold", 12)
+                canvas_obj.setFont("Helvetica-Bold", 14)
                 canvas_obj.setFillColor(colors.HexColor("#1A365D"))
-                canvas_obj.drawString(30, 815, f"Qaza Prayer Tracker — Year {year_val}")
+                canvas_obj.drawString(30, 815, f"{year_val}")
                 canvas_obj.setStrokeColor(colors.HexColor("#CBD5E0"))
                 canvas_obj.setLineWidth(0.5)
                 canvas_obj.line(30, 805, 565, 805)
@@ -236,68 +244,65 @@ def generate_pdf_bytes(df, total_obligatory, total_actual, total_missed, overest
     styles = getSampleStyleSheet()
     
     title_style = ParagraphStyle(
-        'TitleStyle', parent=styles['Heading1'], fontSize=18, leading=22, alignment=1, textColor=colors.HexColor("#1A365D")
+        'TitleStyle', parent=styles['Heading1'], fontSize=16, leading=20, alignment=1, textColor=colors.HexColor("#1A365D")
     )
-    subtitle_style = ParagraphStyle(
-        'SubTitleStyle', parent=styles['Heading2'], fontSize=12, leading=16, alignment=1, textColor=colors.HexColor("#4A5568")
+    h2_style = ParagraphStyle(
+        'H2Style', parent=styles['Heading2'], fontSize=12, leading=16, textColor=colors.HexColor("#1A365D"), spaceAfter=6
+    )
+    body_style = ParagraphStyle(
+        'BodyStyle', parent=styles['Normal'], fontSize=10, leading=14, textColor=colors.HexColor("#2D3748")
+    )
+    quote_style = ParagraphStyle(
+        'QuoteStyle', parent=styles['Normal'], fontSize=11, leading=15, textColor=colors.HexColor("#2B6CB0"), fontName="Helvetica-BoldOblique"
     )
 
-    # Page 1: Master Summary
-    story.append(Paragraph("<b>Personal Qaza Prayer Tracker & Master Summary</b>", title_style))
-    story.append(Spacer(1, 15))
-    
-    min_year = int(df['Year'].min()) if not df.empty else 2020
-    max_year = int(df['Year'].max()) if not df.empty else 2026
-
-    summary_data = [
-        ["Metric / Description", "Value"],
-        ["Total Obligatory Prayers", f"{total_obligatory:,}"],
-        ["Total Actual Prayed", f"{total_actual:,}"],
-        ["Total Missed (Calculated)", f"{total_missed:,}"],
-        ["Safety Margin Target", f"{overestimated_target:,}"]
-    ]
-    t1 = Table(summary_data, colWidths=[250, 150])
-    t1.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#1A365D")),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0,0), (-1,0), 8),
-        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#F7FAFC")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E0")),
-    ]))
-    story.append(t1)
-    story.append(Spacer(1, 20))
-    
-    story.append(Paragraph(f"<b>Lifetime & Yearly Allocation ({num_years} Years: {min_year} - {max_year})</b>", subtitle_style))
+    # Page 1: Custom Personal Accountability & Spiritual Recovery Note
+    story.append(Paragraph("<b>Personal Accountability & Spiritual Recovery Note</b>", title_style))
     story.append(Spacer(1, 10))
     
-    alloc_table_data = [["Prayer", "Lifetime Target", "Yearly Allocation"]]
-    for prayer, total in allocations_dict.items():
-        alloc_table_data.append([prayer, f"{total:,}", f"{yearly_alloc[prayer]:,}"])
-    
-    t2 = Table(alloc_table_data, colWidths=[150, 150, 150])
-    t2.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#2B6CB0")),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0,0), (-1,0), 8),
-        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#F7FAFC")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E0")),
-    ]))
-    story.append(t2)
+    story.append(Paragraph("“A debt owed to Allah has more right to be paid back.”", quote_style))
+    story.append(Paragraph("<font size=9 color='#718096'>— Sahih al-Bukhari (1954)</font>", body_style))
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph("1. Purpose & The Safe Path", h2_style))
+    story.append(Paragraph("Among Islamic scholars, there are two primary views regarding prayers missed over a prolonged period:", body_style))
+    story.append(Spacer(1, 4))
+    story.append(Paragraph("• <b>The First View:</b> Intentionally abandoning prayer for long periods is a grave matter that invalidates past obligations upon sincere repentance, meaning making up past years (Qaza) is not required, and one should focus entirely on abundant voluntary (Nafl) prayers.", body_style))
+    story.append(Spacer(1, 4))
+    story.append(Paragraph("• <b>The Majority View (Jumhoor):</b> Missed obligatory prayers remain a binding spiritual debt owed to Allah (SWT) that must be systematically fulfilled and repaid alongside sincere repentance (Tawbah).", body_style))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("To take the safest path and achieve total peace of mind, this document serves as a structured, personal tool to systematically fulfill all past debts under the majority opinion, ensuring that your obligations to Allah are fully cleared.", body_style))
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph("2. Principle of Privacy & Concealing Shortcomings (Sitr)", h2_style))
+    story.append(Paragraph("If a shortfall or sin is <b>strictly personal between you and Allah</b> and does not harm or affect anyone else, Islam strongly encourages keeping it concealed while performing sincere repentance (<i>Tawbah</i>) and good deeds. Islam teaches that if Allah conceals a person's past sins or shortcomings, that person should not expose themselves or publicize those mistakes. Instead, they should turn to Allah in sincere repentance and focus on doing good deeds.", body_style))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("To preserve complete confidentiality:", body_style))
+    story.append(Spacer(1, 4))
+    story.append(Paragraph("• <b>Abbreviated Labels:</b> On the following tracker pages, daily prayers are listed strictly by their initial letters (F for Fajr, Z for Zuhr, A for Asr, M for Maghrib, I for Isha). To an outside observer, this document appears only as an ambiguous habit or target checklist.", body_style))
+    story.append(Spacer(1, 4))
+    story.append(Paragraph("• <b>Confidentiality:</b> This document is intended solely for your eyes. Do not share or show this tracker to anyone. Keep your progress private between you and your Creator.", body_style))
 
     # Yearly Tracker Pages
     for year in years:
         story.append(NextPageTemplate(f'year_{year}'))
         story.append(PageBreak())
-        story.append(Spacer(1, 15))
         
         for prayer, count in yearly_alloc.items():
-            story.append(Paragraph(f"<b>{prayer}</b> (Target: {count} prayers)", ParagraphStyle('PH', parent=styles['Heading3'], fontSize=11, textColor=colors.HexColor("#2D3748"))))
-            story.append(Spacer(1, 4))
-            story.append(make_rounded_checkbox_grid(count, cols=15))
+            init_letter = initialMap[prayer]
+            grid_table = make_rounded_checkbox_grid(count, cols=15)
+            
+            # Use ReportLab Table repeatRows=1 to repeat both year header (from template) and section label if spilling pages
+            header_para = Paragraph(f"<b>{init_letter} (Target: {count})</b>", ParagraphStyle('PH', parent=styles['Heading3'], fontSize=11, textColor=colors.HexColor("#2D3748")))
+            
+            section_table = Table([[header_para], [grid_table]], colWidths=[535])
+            section_table.setStyle(TableStyle([
+                ('TOPPADDING', (0,0), (-1,-1), 2),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+                ('LEFTPADDING', (0,0), (-1,-1), 0),
+                ('RIGHTPADDING', (0,0), (-1,-1), 0),
+            ]))
+            story.append(section_table)
             story.append(Spacer(1, 8))
 
     doc.build(story, canvasmaker=NumberedCanvas)
@@ -309,9 +314,6 @@ if can_print:
         label="📥 Download Printable PDF Tracker",
         data=generate_pdf_bytes(
             cleaned_df, 
-            total_obligatory, 
-            total_actual, 
-            total_missed, 
             overestimated_target, 
             allocations_dict, 
             yearly_alloc, 
