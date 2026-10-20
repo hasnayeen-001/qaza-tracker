@@ -191,7 +191,7 @@ def make_repeating_prayer_table(init_letter, count, cols=15):
     header_style = ParagraphStyle('WaktHeader', parent=styles['Heading3'], fontSize=11, leading=14, textColor=colors.HexColor("#2D3748"))
     
     if count <= 0:
-        header_p = Paragraph(f"<b>{init_letter} (Target: 0)</b> - <i>No qaza prayers required</i>", header_style)
+        header_p = Paragraph(f"<b>{init_letter} (Target: 0)</b>", header_style)
         t = Table([[header_p]], colWidths=[535])
         t.setStyle(TableStyle([('BOTTOMPADDING', (0,0), (-1,-1), 6)]))
         return t
