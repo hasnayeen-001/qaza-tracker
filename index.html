@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Qaza Prayer Tracker System</title>
+    <style>
+        :root {
+            --primary: #1A365D;
+            --secondary: #2B6CB0;
+            --bg-color: #F7FAFC;
+            --border-color: #CBD5E0;
+            --text-main: #2D3748;
+            --error-bg: #FFF5F5;
+            --error-text: #C53030;
+            --success-bg: #F0FFF4;
+            --success-text: #276749;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        h1 { color: var(--primary); font-size: 24px; margin-bottom: 5px; }
+        h2 { color: var(--primary); font-size: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; margin-top: 30px; }
+        p { color: #4A5568; font-size: 14px; line-height: 1.5; }
+
+        .row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .col {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: var(--text-main);
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        tr:nth-child(even) { background-color: var(--bg-color); }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-card .title { font-size: 12px; color: #718096; font-weight: 600; text-transform: uppercase; }
+        .metric-card .value { font-size: 22px; color: var(--primary); font-weight: bold; margin-top: 5px; }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+        .alert-error { background-color: var(--error-bg); color: var(--error-text); border: 1px solid #FEB2B2; }
+        .alert-success { background-color: var(--success-bg); color: var(--success-text); border: 1px solid #9AE6B4; }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: #2A4365; }
+        .btn:disabled { background-color: #A0AEC0; cursor: not-allowed; }
+
+        /* Print Styles for PDF Generation */
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; }
+            .no-print { display: none !important; }
+            #printReport { display: block !important; }
+            .page-break { page-break-before: always; }
+            
+            /* Repeat headers on top of every page */
+            .repeat-header {
+                display: table-header-group;
+            }
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                border: none !important;
+            }
+            .print-table td {
+                border: none !important;
+                padding: 0 !important;
+            }
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 4px;
+            margin-top: 10px;
+        }
+        .checkbox-box {
+            width: 14px;
+            height: 14px;
+            border: 1px solid #4A5568;
+            border-radius: 3px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="no-print">
+        <h1>🕋 Automated Qaza Prayer Tracker & Printable Generator</h1>
+        <p>Calculate your missed prayers, adjust your safety margin, allocate your lifetime debts across the 5 daily prayers, and generate a print-ready document.</p>
+
+        <!-- STEP 1 -->
+        <h2>Step 1: Select Your Year Range & Prayer History</h2>
+        <p>Adjust the start and end years, then modify yearly days or average daily completions directly in the table.</p>
+        <div class="row">
+            <div class="col">
+                <label for="startYear">Start Year</label>
+                <input type="number" id="startYear" value="2017" min="1900" max="3000" onchange="updateApp()">
+            </div>
+            <div class="col">
+                <label for="endYear">End Year</label>
+                <input type="number" id="endYear" value="2026" min="1900" max="3000" onchange="updateApp()">
+            </div>
+        </div>
+
+        <div id="tableContainer"></div>
+
+        <!-- STEP 2 -->
+        <h2>Step 2: Summary & Safety Margin</h2>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="title">Total Obligatory Prayers</div>
+                <div class="value" id="valObligatory">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="title">Total Actual Prayed</div>
+                <div class="value" id="valActual">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="title">Calculated Missed Prayers</div>
+                <div class="value" id="valMissed">0</div>
+            </div>
+        </div>
+
+        <p style="margin-top: 15px;">To ensure complete spiritual peace of mind, the system suggests rounding up your missed prayers to the nearest 1,000.</p>
+        <label for="safetyTarget">Final Safety Target (Wakts)</label>
+        <input type="number" id="safetyTarget" value="5000" step="500" oninput="updateAllocationsFromTarget()">
+
+        <!-- STEP 3 -->
+        <h2>Step 3: Lifetime 5-Wakt Allocation</h2>
+        <p id="allocationDesc">Manually allocate your target across the 5 daily prayers.</p>
+        
+        <div class="row">
+            <div class="col"><label>Fajr</label><input type="number" id="allocFajr" value="2400" oninput="checkAllocation()"></div>
+            <div class="col"><label>Zuhr</label><input type="number" id="allocZuhr" value="650" oninput="checkAllocation()"></div>
+            <div class="col"><label>Asr</label><input type="number" id="allocAsr" value="650" oninput="checkAllocation()"></div>
+            <div class="col"><label>Maghrib</label><input type="number" id="allocMaghrib" value="650" oninput="checkAllocation()"></div>
+            <div class="col"><label>Isha</label><input type="number" id="allocIsha" value="650" oninput="checkAllocation()"></div>
+        </div>
+
+        <div id="allocationAlert" class="alert alert-success">✅ Lifetime allocation matches your target perfectly!</div>
+
+        <div id="allocSummaryContainer"></div>
+
+        <!-- STEP 4 -->
+        <h2>Step 4: Generate Printable PDF Tracker</h2>
+        <p>Click below to open your browser's print dialog. Save as PDF or print directly.</p>
+        <button id="printBtn" class="btn" onclick="window.print()">📥 Download / Print Printable PDF Tracker</button>
+    </div>
+
+    <!-- PRINTABLE REPORT PREVIEW AREA -->
+    <div id="printReport" style="display:none;"></div>
+</div>
+
+<script>
+    let yearlyData = [];
+
+    function initTable() {
+        const start = parseInt(document.getElementById('startYear').value);
+        const end = parseInt(document.getElementById('endYear').value);
+
+        if (start > end) {
+            alert("Start Year cannot be later than End Year.");
+            return;
+        }
+
+        yearlyData = [];
+        let defaultAvg = [3.0, 3.0, 3.0, 3.5, 3.5, 3.5, 4.0, 4.0, 4.0, 4.0];
+        
+        let idx = 0;
+        for (let y = start; y <= end; y++) {
+            let days = (y === start && start === 2017) ? 150 : 365;
+            let avg = defaultAvg[idx] !== undefined ? defaultAvg[idx] : 4.0;
+            yearlyData.push({ year: y, days: days, avg: avg });
+            idx++;
+        }
+        renderEditableTable();
+        updateApp();
+    }
+
+    function renderEditableTable() {
+        let html = `<table><thead><tr><th>Year</th><th>Adjusted Days</th><th>Avg Wakt Prayed</th></tr></thead><tbody>`;
+        yearlyData.forEach((row, index) => {
+            html += `<tr>
+                <td>${row.year}</td>
+                <td><input type="number" value="${row.days}" min="0" max="366" onchange="updateRowData(${index}, 'days', this.value)"></td>
+                <td><input type="number" value="${row.avg}" min="0" max="5" step="0.1" onchange="updateRowData(${index}, 'avg', this.value)"></td>
+            </tr>`;
+        });
+        html += `</tbody></table>`;
+        document.getElementById('tableContainer').innerHTML = html;
+    }
+
+    function updateRowData(index, field, val) {
+        yearlyData[index][field] = parseFloat(val) || 0;
+        updateApp();
+    }
+
+    function updateApp() {
+        let totalObligatory = 0;
+        let totalActual = 0;
+        let totalMissed = 0;
+
+        yearlyData.forEach(row => {
+            let totWakt = Math.ceil(row.days * 5);
+            let actual = Math.ceil(row.days * row.avg);
+            let missed = Math.max(0, totWakt - actual);
+
+            totalObligatory += totWakt;
+            totalActual += actual;
+            totalMissed += missed;
+        });
+
+        document.getElementById('valObligatory').innerText = totalObligatory.toLocaleString();
+        document.getElementById('valActual').innerText = totalActual.toLocaleString();
+        document.getElementById('valMissed').innerText = totalMissed.toLocaleString();
+
+        let suggestedTarget = totalMissed > 0 ? Math.ceil(totalMissed / 1000) * 1000 : 1000;
+        let safetyInput = document.getElementById('safetyTarget');
+        if(!window.userModifiedSafety) {
+            safetyInput.value = suggestedTarget;
+            updateAllocationsFromTarget();
+        }
+
+        calculateAllocations(false);
+    }
+
+    document.getElementById('safetyTarget').addEventListener('input', () => {
+        window.userModifiedSafety = true;
+        updateAllocationsFromTarget();
+    });
+
+    function updateAllocationsFromTarget() {
+        let target = parseInt(document.getElementById('safetyTarget').value) || 0;
+        document.getElementById('allocFajr').value = Math.round(target * 0.48);
+        document.getElementById('allocZuhr').value = Math.round(target * 0.13);
+        document.getElementById('allocAsr').value = Math.round(target * 0.13);
+        document.getElementById('allocMaghrib').value = Math.round(target * 0.13);
+        document.getElementById('allocIsha').value = Math.round(target * 0.13);
+        checkAllocation();
+    }
+
+    function checkAllocation() {
+        let target = parseInt(document.getElementById('safetyTarget').value) || 0;
+        let fajr = parseInt(document.getElementById('allocFajr').value) || 0;
+        let zuhr = parseInt(document.getElementById('allocZuhr').value) || 0;
+        let asn = parseInt(document.getElementById('allocAsr').value) || 0;
+        let maghrib = parseInt(document.getElementById('allocMaghrib').value) || 0;
+        let isha = parseInt(document.getElementById('allocIsha').value) || 0;
+
+        let totalAlloc = fajr + zuhr + asn + maghrib + isha;
+        let gap = target - totalAlloc;
+
+        let alertBox = document.getElementById('allocationAlert');
+        let printBtn = document.getElementById('printBtn');
+
+        if (gap !== 0) {
+            alertBox.className = "alert alert-error";
+            alertBox.innerHTML = `⚠️ <strong>Allocation Mismatch:</strong> Allocated total (${totalAlloc.toLocaleString()}) does not equal Safety Target (${target.toLocaleString()}). Difference: <strong>${gap > 0 ? '+' + gap.toLocaleString() : gap.toLocaleString()} prayers</strong>.`;
+            printBtn.disabled = true;
+        } else {
+            alertBox.className = "alert alert-success";
+            alertBox.innerHTML = `✅ Lifetime allocation matches your target perfectly!`;
+            printBtn.disabled = false;
+        }
+
+        calculateAllocations(true);
+    }
+
+    function calculateAllocations(renderSummary) {
+        let target = parseInt(document.getElementById('safetyTarget').value) || 0;
+        let numYears = yearlyData.length;
+
+        let allocations = {
+            'Fajr': parseInt(document.getElementById('allocFajr').value) || 0,
+            'Zuhr': parseInt(document.getElementById('allocZuhr').value) || 0,
+            'Asr': parseInt(document.getElementById('allocAsr').value) || 0,
+            'Maghrib': parseInt(document.getElementById('allocMaghrib').value) || 0,
+            'Isha': parseInt(document.getElementById('allocIsha').value) || 0
+        };
+
+        let totalAlloc = Object.values(allocations).reduce((a, b) => a + b, 0);
+
+        let html = `<table><thead><tr><th>Prayer</th><th>Lifetime Target</th><th>Yearly Allocation (${numYears} Years)</th></tr></thead><tbody>`;
+        let totalYearly = 0;
+        for (let [prayer, count] of Object.entries(allocations)) {
+            let yearly = Math.ceil(count / numYears);
+            totalYearly += yearly;
+            html += `<tr><td><b>${prayer}</b></td><td>${count.toLocaleString()}</td><td>${yearly.toLocaleString()}</td></tr>`;
+        }
+        html += `<tr style="background:#edf2f7; font-weight:bold;"><td>Total</td><td>${totalAlloc.toLocaleString()}</td><td>${totalYearly.toLocaleString()}</td></tr></tbody></table>`;
+        
+        document.getElementById('allocSummaryContainer').innerHTML = html;
+
+        buildPrintReportHTML(target, allocations, numYears);
+    }
+
+    function buildPrintReportHTML(target, allocations, numYears) {
+        let startYear = yearlyData[0].year;
+        let endYear = yearlyData[yearlyData.length - 1].year;
+
+        let totalObligatory = 0;
+        let totalActual = 0;
+        let totalMissed = 0;
+
+        yearlyData.forEach(row => {
+            let totWakt = Math.ceil(row.days * 5);
+            let actual = Math.ceil(row.days * row.avg);
+            let missed = Math.max(0, totWakt - actual);
+            totalObligatory += totWakt;
+            totalActual += actual;
+            totalMissed += missed;
+        });
+
+        let reportHTML = `
+            <div style="font-family: sans-serif; padding: 10px;">
+                <h2 style="text-align: center; color: #1A365D;">Personal Qaza Prayer Tracker & Master Summary</h2>
+                <table>
+                    <thead><tr><th>Metric / Description</th><th>Value</th></tr></thead>
+                    <tbody>
+                        <tr><td>Total Obligatory Prayers</td><td>${totalObligatory.toLocaleString()}</td></tr>
+                        <tr><td>Total Actual Prayed</td><td>${totalActual.toLocaleString()}</td></tr>
+                        <tr><td>Total Missed (Calculated)</td><td>${totalMissed.toLocaleString()}</td></tr>
+                        <tr><td>Safety Margin Target</td><td><b>${target.toLocaleString()}</b></td></tr>
+                    </tbody>
+                </table>
+
+                <h3 style="color: #2B6CB0; margin-top: 20px;">Lifetime & Yearly Allocation (${numYears} Years: ${startYear} - ${endYear})</h3>
+                <table>
+                    <thead><tr><th>Prayer</th><th>Lifetime Target</th><th>Yearly Allocation</th></tr></thead>
+                    <tbody>
+        `;
+
+        for (let [prayer, count] of Object.entries(allocations)) {
+            let yearly = Math.ceil(count / numYears);
+            reportHTML += `<tr><td>${prayer}</td><td>${count.toLocaleString()}</td><td>${yearly.toLocaleString()}</td></tr>`;
+        }
+        reportHTML += `</tbody></table></div>`;
+
+        yearlyData.forEach(row => {
+            let yearlyAllocMap = {};
+            for(let [p, c] of Object.entries(allocations)) {
+                yearlyAllocMap[p] = Math.ceil(c / numYears);
+            }
+
+            reportHTML += `<div class="page-break" style="padding: 10px; page-break-before: always;">
+                <table class="print-table">
+                    <thead class="repeat-header">
+                        <tr>
+                            <td>
+                                <h3 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin: 0 0 10px 0;">Qaza Prayer Tracker — Year ${row.year}</h3>
+                            </td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>`;
+            
+            for(let [prayer, count] of Object.entries(yearlyAllocMap)) {
+                reportHTML += `<div style="margin-bottom: 12px;">
+                    <b style="font-size: 13px; color: #2D3748;">${prayer} (Target: ${count} prayers)</b>
+                    <div class="checkbox-grid">`;
+                for(let i = 1; i <= count; i++) {
+                    reportHTML += `<div class="checkbox-box"></div>`;
+                }
+                reportHTML += `</div></div>`;
+            }
+
+            reportHTML += `</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>`;
+        });
+
+        document.getElementById('printReport').innerHTML = reportHTML;
+    }
+
+    window.onload = () => { initTable(); };
+</script>
+
+</body>
+</html>
