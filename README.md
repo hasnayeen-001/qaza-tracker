@@ -28,7 +28,7 @@ The system calculates missed prayers, applies a customizable **Safety Margin**, 
 
 **Step 3: Allocate Lifetime Target**
 
-   * Distribute your total Safety Target across **Fajr, Zuhr, Asr, Maghrib, and Isha**.
+   * Distribute your total Safety Target across **Fajr, Zuhr, Asr, Maghrib, and Isha** **(Mandatory)**.
 
    * Ensure the gap reaches zero so the success banner appears.
 
