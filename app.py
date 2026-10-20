@@ -23,8 +23,8 @@ st.header("Step 1: Select Your Year Range & Prayer History")
 st.markdown("Select your starting year (e.g., year of puberty) and ending year. The system will automatically generate your yearly table. *(Tip: The years are locked automatically, but you can freely click and type into the **Adjusted Days** and **Avg Wakt** columns).*")
 
 col_yr1, col_yr2 = st.columns(2)
-start_year = col_yr1.number_input("Start Year", min_value=1900, max_value=3000, value=2020, step=1)
-end_year = col_yr2.number_input("End Year", min_value=1900, max_value=3000, value=2026, step=1)
+start_year = col_yr1.number_input("Start Year", min_value=1900, max_value=2300, value=2020, step=1)
+end_year = col_yr2.number_input("End Year", min_value=1900, max_value=2300, value=2026, step=1)
 
 if start_year > end_year:
     st.error("⚠️ Start Year cannot be later than End Year. Please adjust your range.")
