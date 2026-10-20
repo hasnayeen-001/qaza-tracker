@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automated Qaza Prayer Tracker System</title>
+    <title>Personal Habit & Recovery Tracker System</title>
     <style>
         :root {
             --primary: #1A365D;
@@ -118,7 +118,7 @@
         .btn:hover { background-color: #2A4365; }
         .btn:disabled { background-color: #A0AEC0; cursor: not-allowed; }
 
-        /* Print Styles for PDF Generation */
+        /* Print Styles */
         @media print {
             body { background: white; padding: 0; }
             .container { box-shadow: none; padding: 0; max-width: 100%; }
@@ -137,7 +137,6 @@
                 padding: 0 !important;
             }
 
-            /* FIX: Keep Prayer Title attached to its checkbox grid */
             .prayer-block {
                 page-break-inside: avoid;
                 break-inside: avoid;
@@ -157,6 +156,20 @@
             border: 1px solid #4A5568;
             border-radius: 3px;
             display: inline-block;
+        }
+
+        .note-card {
+            background: #F7FAFC;
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 6px;
+            line-height: 1.6;
+        }
+        .note-card blockquote {
+            margin: 0 0 15px 0;
+            font-style: italic;
+            color: var(--secondary);
+            font-weight: 600;
         }
     </style>
 </head>
@@ -209,11 +222,11 @@
         <p id="allocationDesc">Manually allocate your target across the 5 daily prayers.</p>
         
         <div class="row">
-            <div class="col"><label>Fajr</label><input type="number" id="allocFajr" value="2400" oninput="checkAllocation()"></div>
-            <div class="col"><label>Zuhr</label><input type="number" id="allocZuhr" value="650" oninput="checkAllocation()"></div>
-            <div class="col"><label>Asr</label><input type="number" id="allocAsr" value="650" oninput="checkAllocation()"></div>
-            <div class="col"><label>Maghrib</label><input type="number" id="allocMaghrib" value="650" oninput="checkAllocation()"></div>
-            <div class="col"><label>Isha</label><input type="number" id="allocIsha" value="650" oninput="checkAllocation()"></div>
+            <div class="col"><label>Fajr (F)</label><input type="number" id="allocFajr" value="2400" oninput="checkAllocation()"></div>
+            <div class="col"><label>Zuhr (Z)</label><input type="number" id="allocZuhr" value="650" oninput="checkAllocation()"></div>
+            <div class="col"><label>Asr (A)</label><input type="number" id="allocAsr" value="650" oninput="checkAllocation()"></div>
+            <div class="col"><label>Maghrib (M)</label><input type="number" id="allocMaghrib" value="650" oninput="checkAllocation()"></div>
+            <div class="col"><label>Isha (I)</label><input type="number" id="allocIsha" value="650" oninput="checkAllocation()"></div>
         </div>
 
         <div id="allocationAlert" class="alert alert-success">✅ Lifetime allocation matches your target perfectly!</div>
@@ -226,12 +239,21 @@
         <button id="printBtn" class="btn" onclick="window.print()">📥 Download / Print Printable PDF Tracker</button>
     </div>
 
-    <!-- PRINTABLE REPORT PREVIEW AREA -->
+    <!-- PRINTABLE REPORT AREA -->
     <div id="printReport" style="display:none;"></div>
 </div>
 
 <script>
     let yearlyData = [];
+
+    // Abbreviated Initial Map
+    const initialMap = {
+        'Fajr': 'F',
+        'Zuhr': 'Z',
+        'Asr': 'A',
+        'Maghrib': 'M',
+        'Isha': 'I'
+    };
 
     function initTable() {
         const start = parseInt(document.getElementById('startYear').value);
@@ -359,12 +381,12 @@
 
         let totalAlloc = Object.values(allocations).reduce((a, b) => a + b, 0);
 
-        let html = `<table><thead><tr><th>Prayer</th><th>Lifetime Target</th><th>Yearly Allocation (${numYears} Years)</th></tr></thead><tbody>`;
+        let html = `<table><thead><tr><th>Wakt</th><th>Lifetime Target</th><th>Yearly Allocation (${numYears} Years)</th></tr></thead><tbody>`;
         let totalYearly = 0;
         for (let [prayer, count] of Object.entries(allocations)) {
             let yearly = Math.ceil(count / numYears);
             totalYearly += yearly;
-            html += `<tr><td><b>${prayer}</b></td><td>${count.toLocaleString()}</td><td>${yearly.toLocaleString()}</td></tr>`;
+            html += `<tr><td><b>${prayer} (${initialMap[prayer]})</b></td><td>${count.toLocaleString()}</td><td>${yearly.toLocaleString()}</td></tr>`;
         }
         html += `<tr style="background:#edf2f7; font-weight:bold;"><td>Total</td><td>${totalAlloc.toLocaleString()}</td><td>${totalYearly.toLocaleString()}</td></tr></tbody></table>`;
         
@@ -374,47 +396,41 @@
     }
 
     function buildPrintReportHTML(target, allocations, numYears) {
-        let startYear = yearlyData[0].year;
-        let endYear = yearlyData[yearlyData.length - 1].year;
-
-        let totalObligatory = 0;
-        let totalActual = 0;
-        let totalMissed = 0;
-
-        yearlyData.forEach(row => {
-            let totWakt = Math.ceil(row.days * 5);
-            let actual = Math.ceil(row.days * row.avg);
-            let missed = Math.max(0, totWakt - actual);
-            totalObligatory += totWakt;
-            totalActual += actual;
-            totalMissed += missed;
-        });
-
+        // Page 1: Custom Final Draft Note
         let reportHTML = `
-            <div style="font-family: sans-serif; padding: 10px;">
-                <h2 style="text-align: center; color: #1A365D;">Personal Qaza Prayer Tracker & Master Summary</h2>
-                <table>
-                    <thead><tr><th>Metric / Description</th><th>Value</th></tr></thead>
-                    <tbody>
-                        <tr><td>Total Obligatory Prayers</td><td>${totalObligatory.toLocaleString()}</td></tr>
-                        <tr><td>Total Actual Prayed</td><td>${totalActual.toLocaleString()}</td></tr>
-                        <tr><td>Total Missed (Calculated)</td><td>${totalMissed.toLocaleString()}</td></tr>
-                        <tr><td>Safety Margin Target</td><td><b>${target.toLocaleString()}</b></td></tr>
-                    </tbody>
-                </table>
+            <div style="font-family: sans-serif; padding: 20px 10px;">
+                <h2 style="text-align: center; color: #1A365D; margin-bottom: 20px;">🕋 Personal Accountability & Spiritual Recovery Note</h2>
+                
+                <blockquote style="border-left: 4px solid #2B6CB0; padding-left: 15px; margin: 0 0 25px 0; color: #2B6CB0; font-style: italic; font-weight: 600;">
+                    “A debt owed to Allah has more right to be paid back.”<br>
+                    <span style="font-size: 13px; font-weight: normal; color: #718096;">— Sahih al-Bukhari (1954)</span>
+                </blockquote>
 
-                <h3 style="color: #2B6CB0; margin-top: 20px;">Lifetime & Yearly Allocation (${numYears} Years: ${startYear} - ${endYear})</h3>
-                <table>
-                    <thead><tr><th>Prayer</th><th>Lifetime Target</th><th>Yearly Allocation</th></tr></thead>
-                    <tbody>
+                <h3 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin-top: 20px;">1. Purpose & The Safe Path</h3>
+                <p style="color: #2D3748; line-height: 1.6; font-size: 14px;">
+                    Among Islamic scholars, there are two primary views regarding prayers missed over a prolonged period:
+                </p>
+                <ul style="color: #2D3748; line-height: 1.6; font-size: 14px; padding-left: 20px;">
+                    <li style="margin-bottom: 8px;"><strong>The First View:</strong> Intentionally abandoning prayer for long periods is a grave matter that invalidates past obligations upon sincere repentance, meaning making up past years (Qaza) is not required, and one should focus entirely on abundant voluntary (Nafl) prayers.</li>
+                    <li><strong>The Majority View (Jumhoor):</strong> Missed obligatory prayers remain a binding spiritual debt owed to Allah (SWT) that must be systematically fulfilled and repaid alongside sincere repentance (Tawbah).</li>
+                </ul>
+                <p style="color: #2D3748; line-height: 1.6; font-size: 14px;">
+                    To take the safest path and achieve total peace of mind, this document serves as a structured, personal tool to systematically fulfill all past debts under the majority opinion, ensuring that your obligations to Allah are fully cleared.
+                </p>
+
+                <h3 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin-top: 25px;">2. Principle of Privacy & Concealing Shortcomings (Sitr)</h3>
+                <p style="color: #2D3748; line-height: 1.6; font-size: 14px;">
+                    If a shortfall or sin is <strong>strictly personal between you and Allah</strong> and does not harm or affect anyone else, Islam strongly encourages keeping it concealed while performing sincere repentance (<em>Tawbah</em>) and good deeds. Islam teaches that if Allah conceals a person's past sins or shortcomings, that person should not expose themselves or publicize those mistakes. Instead, they should turn to Allah in sincere repentance and focus on doing good deeds.
+                </p>
+                <p style="color: #2D3748; line-height: 1.6; font-size: 14px;">To preserve complete confidentiality:</p>
+                <ul style="color: #2D3748; line-height: 1.6; font-size: 14px; padding-left: 20px;">
+                    <li style="margin-bottom: 8px;"><strong>Abbreviated Labels:</strong> On the following tracker pages, daily prayers are listed strictly by their initial letters (F for Fajr, Z for Zuhr, A for Asr, M for Maghrib, I for Isha). To an outside observer, this document appears only as an ambiguous habit or target checklist.</li>
+                    <li><strong>Confidentiality:</strong> This document is intended solely for your eyes. Do not share or show this tracker to anyone. Keep your progress private between you and your Creator.</li>
+                </ul>
+            </div>
         `;
 
-        for (let [prayer, count] of Object.entries(allocations)) {
-            let yearly = Math.ceil(count / numYears);
-            reportHTML += `<tr><td>${prayer}</td><td>${count.toLocaleString()}</td><td>${yearly.toLocaleString()}</td></tr>`;
-        }
-        reportHTML += `</tbody></table></div>`;
-
+        // Yearly Tracker Pages
         yearlyData.forEach(row => {
             let yearlyAllocMap = {};
             for(let [p, c] of Object.entries(allocations)) {
@@ -426,7 +442,7 @@
                     <thead class="repeat-header">
                         <tr>
                             <td>
-                                <h3 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin: 0 0 10px 0;">Qaza Prayer Tracker — Year ${row.year}</h3>
+                                <h2 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin: 0 0 15px 0;">${row.year}</h2>
                             </td>
                         </tr>
                     </thead>
@@ -435,8 +451,9 @@
                             <td>`;
             
             for(let [prayer, count] of Object.entries(yearlyAllocMap)) {
+                let initLetter = initialMap[prayer];
                 reportHTML += `<div class="prayer-block">
-                    <b style="font-size: 13px; color: #2D3748;">${prayer} (Target: ${count} prayers)</b>
+                    <b style="font-size: 14px; color: #2D3748;">${initLetter} (Target: ${count})</b>
                     <div class="checkbox-grid">`;
                 for(let i = 1; i <= count; i++) {
                     reportHTML += `<div class="checkbox-box"></div>`;
