@@ -217,6 +217,15 @@ def make_rounded_checkbox_grid(count, cols=15):
 def generate_pdf_bytes(df, overestimated_target, allocations_dict, yearly_alloc, num_years):
     pdf_buffer = io.BytesIO()
 
+    # Local initial mapping inside the function scope to avoid NameError
+    initial_map_local = {
+        'Fajr': 'F',
+        'Zuhr': 'Z',
+        'Asr': 'A',
+        'Maghrib': 'M',
+        'Isha': 'I'
+    }
+
     frame = Frame(30, 40, 535, 756, id='normal')
     
     # Page 1 (Summary/Note) - NO running top header line
@@ -289,13 +298,13 @@ def generate_pdf_bytes(df, overestimated_target, allocations_dict, yearly_alloc,
         story.append(PageBreak())
         
         for prayer, count in yearly_alloc.items():
-            init_letter = initialMap[prayer]
+            init_letter = initial_map_local[prayer]
             grid_table = make_rounded_checkbox_grid(count, cols=15)
             
-            # Use ReportLab Table repeatRows=1 to repeat both year header (from template) and section label if spilling pages
+            # Use ReportLab Table repeatRows=1 to repeat both year header and section label if spilling pages
             header_para = Paragraph(f"<b>{init_letter} (Target: {count})</b>", ParagraphStyle('PH', parent=styles['Heading3'], fontSize=11, textColor=colors.HexColor("#2D3748")))
             
-            section_table = Table([[header_para], [grid_table]], colWidths=[535])
+            section_table = Table([[header_para], [grid_table]], colWidths=[535], repeatRows=1)
             section_table.setStyle(TableStyle([
                 ('TOPPADDING', (0,0), (-1,-1), 2),
                 ('BOTTOMPADDING', (0,0), (-1,-1), 4),
