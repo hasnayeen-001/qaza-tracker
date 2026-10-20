@@ -7,57 +7,24 @@ A clean, privacy-focused Streamlit web application designed for non-coders and i
 
 The system calculates missed prayers, applies a customizable **Safety Margin**, divides obligations across the 5 daily Islamic prayers (**Fajr, Zuhr, Asr, Maghrib, Isha**), and generates a print-ready, high-quality **ReportLab PDF** equipped with custom rounded-corner checkbox grids.
 
-## 🌟 Key Features
-
-* **Dynamic Year Range Selector:** Input your starting year (e.g., year of puberty) and ending year (e.g., current year) to generate an interactive history grid.
-
-* **Intuitive Terminology:** Uses refined, intuitive labels such as **Adjusted Days** (accounting for exemptions or puberty start dates) and **Safety Margin**.
-
-* **Flexible Lifetime Allocation:** Allows manual distribution of missed prayers across the 5 daily prayers to reflect individual habits (e.g., assigning higher counts to Fajr).
-
-## 🚀 Getting Started
-
-### **Prerequisites**
-
-* Python 3.9 or higher installed on your system.
-
-### **Installation**
-
-1. **Clone the repository:**
-
-   ```
-   git clone https://github.com/hasnayeen-001/qaza-tracker.git
-   cd qaza-tracker
-   
-   ```
-
-2. **Install required packages:**
-
-   ```
-   pip install streamlit reportlab pandas numpy
-   
-   ```
-
-3. **Run the Streamlit application:**
-
-   ```
-   streamlit run app.py
-   
-   ```
+**Now available on 3 platforms! Choose how you want to use it:**
+* **☁️ Option 1: Live Cloud Version** — Use the hosted Streamlit app online via the link above.
+* **🌐 Option 2: Standalone Browser Version (`index.html`)** — Download the repository and double-click `index.html` to run it instantly in any web browser offline.
+* **🐍 Option 3: Local Python Server:** Clone the repository and run `streamlit run app.py` on your machine.
 
 ## 📖 How to Use
 
 1. **Step 1: Select Year Range & History**
 
-   * Choose your starting and ending years.
+   * Choose your starting and ending years (Mandatory).
 
-   * Edit the **Adjusted Days** column (default 365) and **Avg Wakt Prayed** column (0.0 to 5.0) for each year.
+   * Edit the **Adjusted Days** column (default 365) and **Avg Wakt Prayed** column (0.0 to 5.0) for each year (Optional).
 
 2. **Step 2: Review Summary & Set Safety Margin**
 
    * Inspect calculated missed prayers.
 
-   * Adjust your **Final Safety Target** to round up your target for peace of mind.
+   * Adjust your **Final Safety Target** to round up your target for peace of mind (MANDATORY!!!).
 
 3. **Step 3: Allocate Lifetime Target**
 
