@@ -171,12 +171,12 @@
         <p>Adjust the start and end years, then modify yearly days or average daily completions directly in the table.</p>
         <div class="row">
             <div class="col">
-                <label for="startYear">Start Year</label>
-                <input type="number" id="startYear" value="2020" min="1900" max="3000" onchange="initTable()">
+                <label for="startYear">Start Year (1900–2300)</label>
+                <input type="number" id="startYear" value="2020" min="1900" max="2300" onchange="validateYearInputs(); initTable();" oninput="validateYearInputs();">
             </div>
             <div class="col">
-                <label for="endYear">End Year</label>
-                <input type="number" id="endYear" value="2026" min="1900" max="3000" onchange="initTable()">
+                <label for="endYear">End Year (1900–2300)</label>
+                <input type="number" id="endYear" value="2026" min="1900" max="2300" onchange="validateYearInputs(); initTable();" oninput="validateYearInputs();">
             </div>
         </div>
 
@@ -201,18 +201,18 @@
 
         <p style="margin-top: 15px;">To ensure complete spiritual peace of mind, the system suggests rounding up your missed prayers to the nearest 1,000.</p>
         <label for="safetyTarget">Final Safety Target (Wakts)</label>
-        <input type="number" id="safetyTarget" value="5000" step="500" oninput="updateAllocationsFromTarget()">
+        <input type="number" id="safetyTarget" value="5000" min="0" step="500" oninput="updateAllocationsFromTarget()">
 
         <!-- STEP 3 -->
         <h2>Step 3: Lifetime 5-Wakt Allocation</h2>
         <p id="allocationDesc">Manually allocate your target across the 5 daily prayers.</p>
         
         <div class="row">
-            <div class="col"><label>Fajr (F)</label><input type="number" id="allocFajr" value="2400" oninput="checkAllocation()"></div>
-            <div class="col"><label>Zuhr (Z)</label><input type="number" id="allocZuhr" value="650" oninput="checkAllocation()"></div>
-            <div class="col"><label>Asr (A)</label><input type="number" id="allocAsr" value="650" oninput="checkAllocation()"></div>
-            <div class="col"><label>Maghrib (M)</label><input type="number" id="allocMaghrib" value="650" oninput="checkAllocation()"></div>
-            <div class="col"><label>Isha (I)</label><input type="number" id="allocIsha" value="650" oninput="checkAllocation()"></div>
+            <div class="col"><label>Fajr (F)</label><input type="number" id="allocFajr" value="2400" min="0" oninput="checkAllocation()"></div>
+            <div class="col"><label>Zuhr (Z)</label><input type="number" id="allocZuhr" value="650" min="0" oninput="checkAllocation()"></div>
+            <div class="col"><label>Asr (A)</label><input type="number" id="allocAsr" value="650" min="0" oninput="checkAllocation()"></div>
+            <div class="col"><label>Maghrib (M)</label><input type="number" id="allocMaghrib" value="650" min="0" oninput="checkAllocation()"></div>
+            <div class="col"><label>Isha (I)</label><input type="number" id="allocIsha" value="650" min="0" oninput="checkAllocation()"></div>
         </div>
 
         <div id="allocationAlert" class="alert alert-success">✅ Lifetime allocation matches your target perfectly!</div>
@@ -240,7 +240,28 @@
         'Isha': 'I'
     };
 
+    function validateYearInputs() {
+        const startElem = document.getElementById('startYear');
+        const endElem = document.getElementById('endYear');
+
+        let start = parseInt(startElem.value);
+        let end = parseInt(endElem.value);
+
+        if (isNaN(start)) start = 1900;
+        if (isNaN(end)) end = 2300;
+
+        // Clamp year values strictly between 1900 and 2300
+        if (start < 1900) start = 1900;
+        if (start > 2300) start = 2300;
+        if (end < 1900) end = 1900;
+        if (end > 2300) end = 2300;
+
+        startElem.value = start;
+        endElem.value = end;
+    }
+
     function initTable() {
+        validateYearInputs();
         const start = parseInt(document.getElementById('startYear').value);
         const end = parseInt(document.getElementById('endYear').value);
 
@@ -264,20 +285,34 @@
     }
 
     function renderEditableTable() {
-        let html = `<table><thead><tr><th>Year</th><th>Adjusted Days</th><th>Avg Wakt Prayed</th></tr></thead><tbody>`;
+        let html = `<table><thead><tr><th>Year</th><th>Adjusted Days (0–366)</th><th>Avg Wakt Prayed (0.0–5.0)</th></tr></thead><tbody>`;
         yearlyData.forEach((row, index) => {
             html += `<tr>
                 <td>${row.year}</td>
-                <td><input type="number" value="${row.days}" min="0" max="366" onchange="updateRowData(${index}, 'days', this.value)"></td>
-                <td><input type="number" value="${row.avg}" min="0" max="5" step="0.1" onchange="updateRowData(${index}, 'avg', this.value)"></td>
+                <td><input type="number" value="${row.days}" min="0" max="366" onchange="updateRowData(${index}, 'days', this)" oninput="updateRowData(${index}, 'days', this)"></td>
+                <td><input type="number" value="${row.avg}" min="0" max="5" step="0.1" onchange="updateRowData(${index}, 'avg', this)" oninput="updateRowData(${index}, 'avg', this)"></td>
             </tr>`;
         });
         html += `</tbody></table>`;
         document.getElementById('tableContainer').innerHTML = html;
     }
 
-    function updateRowData(index, field, val) {
-        yearlyData[index][field] = parseFloat(val) || 0;
+    function updateRowData(index, field, inputElem) {
+        let val = parseFloat(inputElem.value);
+        if (isNaN(val)) val = 0;
+
+        // Strict Clamping Rules
+        if (field === 'days') {
+            if (val < 0) val = 0;
+            if (val > 366) val = 366;
+            inputElem.value = val;
+        } else if (field === 'avg') {
+            if (val < 0) val = 0;
+            if (val > 5.0) val = 5.0;
+            inputElem.value = val;
+        }
+
+        yearlyData[index][field] = val;
         updateApp();
     }
 
@@ -316,7 +351,10 @@
     });
 
     function updateAllocationsFromTarget() {
-        let target = parseInt(document.getElementById('safetyTarget').value) || 0;
+        let target = parseInt(document.getElementById('safetyTarget').value);
+        if (isNaN(target) || target < 0) target = 0;
+        document.getElementById('safetyTarget').value = target;
+
         document.getElementById('allocFajr').value = Math.round(target * 0.48);
         document.getElementById('allocZuhr').value = Math.round(target * 0.13);
         document.getElementById('allocAsr').value = Math.round(target * 0.13);
@@ -384,7 +422,7 @@
         // Page 1: Personal Accountability & Spiritual Recovery Note
         let reportHTML = `
             <div style="font-family: sans-serif; padding: 20px 10px;">
-                <h2 style="text-align: center; color: #1A365D; margin-bottom: 20px;">🕋 Personal Accountability & Spiritual Recovery Note</h2>
+                <h2 style="text-align: center; color: #1A365D; margin-bottom: 20px;">Personal Accountability & Spiritual Recovery Note</h2>
                 
                 <blockquote style="border-left: 4px solid #2B6CB0; padding-left: 15px; margin: 0 0 25px 0; color: #2B6CB0; font-style: italic; font-weight: 600;">
                     “A debt owed to Allah has more right to be paid back.”<br>
@@ -424,8 +462,6 @@
 
             reportHTML += `<div class="page-break" style="padding: 10px; page-break-before: always;">`;
             
-            // Generate a table block per prayer where the thead contains BOTH the Year and Wakt Initial.
-            // This ensures BOTH headers repeat if a prayer grid breaks across multiple paper pages.
             for(let [prayer, count] of Object.entries(yearlyAllocMap)) {
                 let initLetter = initialMap[prayer];
                 
