@@ -9,7 +9,7 @@ The system calculates missed prayers, applies a customizable **Safety Margin**, 
 
 **Now available on 3 platforms! Choose how you want to use it:**
 - ☁️ **Option 1: Live Cloud Version** — Use the hosted Streamlit app online via the link above.
-- 🌐 **Option 2: Standalone Browser Version** ([index.html](index.html)) — Download the file and double-click it to run it instantly offline in any web browser.
+- 🌐 **Option 2: Standalone Browser Version** — Download ([index.html](index.html)) file and double-click it to run it instantly offline in any web browser.
 - 🐍 **Option 3: Local Python Server** — Clone the repository and run `streamlit run app.py` on your machine.
 
 ## 📖 How to Use
