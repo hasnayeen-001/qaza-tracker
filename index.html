@@ -126,7 +126,6 @@
             #printReport { display: block !important; }
             .page-break { page-break-before: always; }
             
-            /* Repeat table header on every printed page split */
             .repeat-header { 
                 display: table-header-group; 
             }
@@ -171,12 +170,12 @@
         <p>Adjust the start and end years, then modify yearly days or average daily completions directly in the table.</p>
         <div class="row">
             <div class="col">
-                <label for="startYear">Start Year (1900–2300)</label>
-                <input type="number" id="startYear" value="2020" min="1900" max="2300" onchange="initTable()">
+                <label for="startYear">Start Year</label>
+                <input type="number" id="startYear" value="2020" min="0" oninput="initTable()">
             </div>
             <div class="col">
-                <label for="endYear">End Year (1900–2300)</label>
-                <input type="number" id="endYear" value="2026" min="1900" max="2300" onchange="initTable()">
+                <label for="endYear">End Year</label>
+                <input type="number" id="endYear" value="2026" min="0" oninput="initTable()">
             </div>
         </div>
 
@@ -201,7 +200,7 @@
 
         <p style="margin-top: 15px;">To ensure complete spiritual peace of mind, the system suggests rounding up your missed prayers to the nearest 1,000.</p>
         <label for="safetyTarget">Final Safety Target (Wakts)</label>
-        <input type="number" id="safetyTarget" value="5000" min="0" step="500" onchange="updateAllocationsFromTarget()">
+        <input type="number" id="safetyTarget" value="5000" min="0" step="500" oninput="updateAllocationsFromTarget()">
 
         <!-- STEP 3 -->
         <h2>Step 3: Lifetime 5-Wakt Allocation</h2>
@@ -240,31 +239,17 @@
         'Isha': 'I'
     };
 
-    function validateYearInputs() {
-        const startElem = document.getElementById('startYear');
-        const endElem = document.getElementById('endYear');
-
-        let start = parseInt(startElem.value);
-        let end = parseInt(endElem.value);
-
-        if (isNaN(start) || start < 1900) start = 1900;
-        if (start > 2300) start = 2300;
-        if (isNaN(end) || end < 1900) end = 1900;
-        if (end > 2300) end = 2300;
-
-        startElem.value = start;
-        endElem.value = end;
-    }
-
     function initTable() {
-        validateYearInputs();
-        const start = parseInt(document.getElementById('startYear').value);
-        const end = parseInt(document.getElementById('endYear').value);
+        let rawStart = document.getElementById('startYear').value;
+        let rawEnd = document.getElementById('endYear').value;
 
-        if (start > end) {
-            alert("Start Year cannot be later than End Year.");
-            return;
-        }
+        // Allow empty field while typing
+        if (rawStart === '' || rawEnd === '') return;
+
+        let start = Math.max(0, parseInt(rawStart) || 0);
+        let end = Math.max(0, parseInt(rawEnd) || 0);
+
+        if (start > end) return;
 
         yearlyData = [];
         let defaultAvg = [3.0, 3.0, 3.0, 3.5, 3.5, 3.5, 4.0, 4.0, 4.0, 4.0];
@@ -281,32 +266,24 @@
     }
 
     function renderEditableTable() {
-        let html = `<table><thead><tr><th>Year</th><th>Adjusted Days (0–366)</th><th>Avg Wakt Prayed (0.0–5.0)</th></tr></thead><tbody>`;
+        let html = `<table><thead><tr><th>Year</th><th>Adjusted Days</th><th>Avg Wakt Prayed</th></tr></thead><tbody>`;
         yearlyData.forEach((row, index) => {
             html += `<tr>
                 <td>${row.year}</td>
-                <td><input type="number" value="${row.days}" min="0" max="366" onchange="updateRowData(${index}, 'days', this)"></td>
-                <td><input type="number" value="${row.avg}" min="0" max="5" step="0.1" onchange="updateRowData(${index}, 'avg', this)"></td>
+                <td><input type="number" value="${row.days}" min="0" max="366" oninput="updateRowData(${index}, 'days', this.value)"></td>
+                <td><input type="number" value="${row.avg}" min="0" max="5" step="0.1" oninput="updateRowData(${index}, 'avg', this.value)"></td>
             </tr>`;
         });
         html += `</tbody></table>`;
         document.getElementById('tableContainer').innerHTML = html;
     }
 
-    function updateRowData(index, field, inputElem) {
-        let val = parseFloat(inputElem.value);
-        if (isNaN(val)) val = 0;
+    function updateRowData(index, field, valStr) {
+        if (valStr === '') return;
+        let val = Math.max(0, parseFloat(valStr) || 0);
 
-        // Strict Clamping Rules upon committing value
-        if (field === 'days') {
-            if (val < 0) val = 0;
-            if (val > 366) val = 366;
-            inputElem.value = val;
-        } else if (field === 'avg') {
-            if (val < 0) val = 0;
-            if (val > 5.0) val = 5.0;
-            inputElem.value = val;
-        }
+        if (field === 'days' && val > 366) val = 366;
+        if (field === 'avg' && val > 5) val = 5;
 
         yearlyData[index][field] = val;
         updateApp();
@@ -341,15 +318,13 @@
         calculateAllocations(false);
     }
 
-    document.getElementById('safetyTarget').addEventListener('change', () => {
+    document.getElementById('safetyTarget').addEventListener('input', () => {
         window.userModifiedSafety = true;
         updateAllocationsFromTarget();
     });
 
     function updateAllocationsFromTarget() {
-        let target = parseInt(document.getElementById('safetyTarget').value);
-        if (isNaN(target) || target < 0) target = 0;
-        document.getElementById('safetyTarget').value = target;
+        let target = Math.max(0, parseInt(document.getElementById('safetyTarget').value) || 0);
 
         document.getElementById('allocFajr').value = Math.round(target * 0.48);
         document.getElementById('allocZuhr').value = Math.round(target * 0.13);
@@ -360,12 +335,12 @@
     }
 
     function checkAllocation() {
-        let target = parseInt(document.getElementById('safetyTarget').value) || 0;
-        let fajr = parseInt(document.getElementById('allocFajr').value) || 0;
-        let zuhr = parseInt(document.getElementById('allocZuhr').value) || 0;
-        let asn = parseInt(document.getElementById('allocAsr').value) || 0;
-        let maghrib = parseInt(document.getElementById('allocMaghrib').value) || 0;
-        let isha = parseInt(document.getElementById('allocIsha').value) || 0;
+        let target = Math.max(0, parseInt(document.getElementById('safetyTarget').value) || 0);
+        let fajr = Math.max(0, parseInt(document.getElementById('allocFajr').value) || 0);
+        let zuhr = Math.max(0, parseInt(document.getElementById('allocZuhr').value) || 0);
+        let asn = Math.max(0, parseInt(document.getElementById('allocAsr').value) || 0);
+        let maghrib = Math.max(0, parseInt(document.getElementById('allocMaghrib').value) || 0);
+        let isha = Math.max(0, parseInt(document.getElementById('allocIsha').value) || 0);
 
         let totalAlloc = fajr + zuhr + asn + maghrib + isha;
         let gap = target - totalAlloc;
@@ -387,15 +362,15 @@
     }
 
     function calculateAllocations(renderSummary) {
-        let target = parseInt(document.getElementById('safetyTarget').value) || 0;
+        let target = Math.max(0, parseInt(document.getElementById('safetyTarget').value) || 0);
         let numYears = yearlyData.length;
 
         let allocations = {
-            'Fajr': parseInt(document.getElementById('allocFajr').value) || 0,
-            'Zuhr': parseInt(document.getElementById('allocZuhr').value) || 0,
-            'Asr': parseInt(document.getElementById('allocAsr').value) || 0,
-            'Maghrib': parseInt(document.getElementById('allocMaghrib').value) || 0,
-            'Isha': parseInt(document.getElementById('allocIsha').value) || 0
+            'Fajr': Math.max(0, parseInt(document.getElementById('allocFajr').value) || 0),
+            'Zuhr': Math.max(0, parseInt(document.getElementById('allocZuhr').value) || 0),
+            'Asr': Math.max(0, parseInt(document.getElementById('allocAsr').value) || 0),
+            'Maghrib': Math.max(0, parseInt(document.getElementById('allocMaghrib').value) || 0),
+            'Isha': Math.max(0, parseInt(document.getElementById('allocIsha').value) || 0)
         };
 
         let totalAlloc = Object.values(allocations).reduce((a, b) => a + b, 0);
@@ -403,7 +378,7 @@
         let html = `<table><thead><tr><th>Wakt</th><th>Lifetime Target</th><th>Yearly Allocation (${numYears} Years)</th></tr></thead><tbody>`;
         let totalYearly = 0;
         for (let [prayer, count] of Object.entries(allocations)) {
-            let yearly = Math.ceil(count / numYears);
+            let yearly = Math.ceil(count / (numYears || 1));
             totalYearly += yearly;
             html += `<tr><td><b>${prayer} (${initialMap[prayer]})</b></td><td>${count.toLocaleString()}</td><td>${yearly.toLocaleString()}</td></tr>`;
         }
@@ -453,7 +428,7 @@
         yearlyData.forEach(row => {
             let yearlyAllocMap = {};
             for(let [p, c] of Object.entries(allocations)) {
-                yearlyAllocMap[p] = Math.ceil(c / numYears);
+                yearlyAllocMap[p] = Math.ceil(c / (numYears || 1));
             }
 
             reportHTML += `<div class="page-break" style="padding: 10px; page-break-before: always;">`;
