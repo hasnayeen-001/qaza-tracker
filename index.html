@@ -126,6 +126,7 @@
             #printReport { display: block !important; }
             .page-break { page-break-before: always; }
             
+            /* Repeat table header on every printed page split */
             .repeat-header { 
                 display: table-header-group; 
             }
@@ -171,11 +172,11 @@
         <div class="row">
             <div class="col">
                 <label for="startYear">Start Year</label>
-                <input type="number" id="startYear" value="2020" min="0" oninput="initTable()">
+                <input type="number" id="startYear" value="2020" min="1900" max="3000" onchange="initTable()">
             </div>
             <div class="col">
                 <label for="endYear">End Year</label>
-                <input type="number" id="endYear" value="2026" min="0" oninput="initTable()">
+                <input type="number" id="endYear" value="2026" min="1900" max="3000" onchange="initTable()">
             </div>
         </div>
 
@@ -200,7 +201,7 @@
 
         <p style="margin-top: 15px;">To ensure complete spiritual peace of mind, the system suggests rounding up your missed prayers to the nearest 1,000.</p>
         <label for="safetyTarget">Final Safety Target (Wakts)</label>
-        <input type="number" id="safetyTarget" value="5000" min="0" step="500" oninput="updateAllocationsFromTarget()">
+        <input type="number" id="safetyTarget" value="5000" step="500" oninput="updateAllocationsFromTarget()">
 
         <!-- STEP 3 -->
         <h2>Step 3: Lifetime 5-Wakt Allocation</h2>
@@ -240,16 +241,13 @@
     };
 
     function initTable() {
-        let rawStart = document.getElementById('startYear').value;
-        let rawEnd = document.getElementById('endYear').value;
+        const start = parseInt(document.getElementById('startYear').value);
+        const end = parseInt(document.getElementById('endYear').value);
 
-        // Allow empty field while typing
-        if (rawStart === '' || rawEnd === '') return;
-
-        let start = Math.max(0, parseInt(rawStart) || 0);
-        let end = Math.max(0, parseInt(rawEnd) || 0);
-
-        if (start > end) return;
+        if (start > end) {
+            alert("Start Year cannot be later than End Year.");
+            return;
+        }
 
         yearlyData = [];
         let defaultAvg = [3.0, 3.0, 3.0, 3.5, 3.5, 3.5, 4.0, 4.0, 4.0, 4.0];
@@ -270,22 +268,24 @@
         yearlyData.forEach((row, index) => {
             html += `<tr>
                 <td>${row.year}</td>
-                <td><input type="number" value="${row.days}" min="0" max="366" oninput="updateRowData(${index}, 'days', this.value)"></td>
-                <td><input type="number" value="${row.avg}" min="0" max="5" step="0.1" oninput="updateRowData(${index}, 'avg', this.value)"></td>
+                <td><input type="number" value="${row.days}" min="0" max="366" step="1" onchange="updateRowData(${index}, 'days', this.value)"></td>
+                <td><input type="number" value="${row.avg}" min="0.0" max="5.0" step="0.1" onchange="updateRowData(${index}, 'avg', this.value)"></td>
             </tr>`;
         });
         html += `</tbody></table>`;
         document.getElementById('tableContainer').innerHTML = html;
     }
 
-    function updateRowData(index, field, valStr) {
-        if (valStr === '') return;
-        let val = Math.max(0, parseFloat(valStr) || 0);
-
-        if (field === 'days' && val > 366) val = 366;
-        if (field === 'avg' && val > 5) val = 5;
-
-        yearlyData[index][field] = val;
+    function updateRowData(index, field, val) {
+        let numVal = parseFloat(val) || 0;
+        if (field === 'days') {
+            if (numVal > 366) numVal = 366;
+            if (numVal < 0) numVal = 0;
+        } else if (field === 'avg') {
+            if (numVal > 5.0) numVal = 5.0;
+            if (numVal < 0.0) numVal = 0.0;
+        }
+        yearlyData[index][field] = numVal;
         updateApp();
     }
 
@@ -324,8 +324,7 @@
     });
 
     function updateAllocationsFromTarget() {
-        let target = Math.max(0, parseInt(document.getElementById('safetyTarget').value) || 0);
-
+        let target = parseInt(document.getElementById('safetyTarget').value) || 0;
         document.getElementById('allocFajr').value = Math.round(target * 0.48);
         document.getElementById('allocZuhr').value = Math.round(target * 0.13);
         document.getElementById('allocAsr').value = Math.round(target * 0.13);
@@ -335,12 +334,12 @@
     }
 
     function checkAllocation() {
-        let target = Math.max(0, parseInt(document.getElementById('safetyTarget').value) || 0);
-        let fajr = Math.max(0, parseInt(document.getElementById('allocFajr').value) || 0);
-        let zuhr = Math.max(0, parseInt(document.getElementById('allocZuhr').value) || 0);
-        let asn = Math.max(0, parseInt(document.getElementById('allocAsr').value) || 0);
-        let maghrib = Math.max(0, parseInt(document.getElementById('allocMaghrib').value) || 0);
-        let isha = Math.max(0, parseInt(document.getElementById('allocIsha').value) || 0);
+        let target = parseInt(document.getElementById('safetyTarget').value) || 0;
+        let fajr = parseInt(document.getElementById('allocFajr').value) || 0;
+        let zuhr = parseInt(document.getElementById('allocZuhr').value) || 0;
+        let asn = parseInt(document.getElementById('allocAsr').value) || 0;
+        let maghrib = parseInt(document.getElementById('allocMaghrib').value) || 0;
+        let isha = parseInt(document.getElementById('allocIsha').value) || 0;
 
         let totalAlloc = fajr + zuhr + asn + maghrib + isha;
         let gap = target - totalAlloc;
@@ -362,15 +361,15 @@
     }
 
     function calculateAllocations(renderSummary) {
-        let target = Math.max(0, parseInt(document.getElementById('safetyTarget').value) || 0);
+        let target = parseInt(document.getElementById('safetyTarget').value) || 0;
         let numYears = yearlyData.length;
 
         let allocations = {
-            'Fajr': Math.max(0, parseInt(document.getElementById('allocFajr').value) || 0),
-            'Zuhr': Math.max(0, parseInt(document.getElementById('allocZuhr').value) || 0),
-            'Asr': Math.max(0, parseInt(document.getElementById('allocAsr').value) || 0),
-            'Maghrib': Math.max(0, parseInt(document.getElementById('allocMaghrib').value) || 0),
-            'Isha': Math.max(0, parseInt(document.getElementById('allocIsha').value) || 0)
+            'Fajr': parseInt(document.getElementById('allocFajr').value) || 0,
+            'Zuhr': parseInt(document.getElementById('allocZuhr').value) || 0,
+            'Asr': parseInt(document.getElementById('allocAsr').value) || 0,
+            'Maghrib': parseInt(document.getElementById('allocMaghrib').value) || 0,
+            'Isha': parseInt(document.getElementById('allocIsha').value) || 0
         };
 
         let totalAlloc = Object.values(allocations).reduce((a, b) => a + b, 0);
@@ -378,7 +377,7 @@
         let html = `<table><thead><tr><th>Wakt</th><th>Lifetime Target</th><th>Yearly Allocation (${numYears} Years)</th></tr></thead><tbody>`;
         let totalYearly = 0;
         for (let [prayer, count] of Object.entries(allocations)) {
-            let yearly = Math.ceil(count / (numYears || 1));
+            let yearly = Math.ceil(count / numYears);
             totalYearly += yearly;
             html += `<tr><td><b>${prayer} (${initialMap[prayer]})</b></td><td>${count.toLocaleString()}</td><td>${yearly.toLocaleString()}</td></tr>`;
         }
@@ -393,7 +392,7 @@
         // Page 1: Personal Accountability & Spiritual Recovery Note
         let reportHTML = `
             <div style="font-family: sans-serif; padding: 20px 10px;">
-                <h2 style="text-align: center; color: #1A365D; margin-bottom: 20px;">Personal Accountability & Spiritual Recovery Note</h2>
+                <h2 style="text-align: center; color: #1A365D; margin-bottom: 20px;">🕋 Personal Accountability & Spiritual Recovery Note</h2>
                 
                 <blockquote style="border-left: 4px solid #2B6CB0; padding-left: 15px; margin: 0 0 25px 0; color: #2B6CB0; font-style: italic; font-weight: 600;">
                     “A debt owed to Allah has more right to be paid back.”<br>
@@ -428,7 +427,7 @@
         yearlyData.forEach(row => {
             let yearlyAllocMap = {};
             for(let [p, c] of Object.entries(allocations)) {
-                yearlyAllocMap[p] = Math.ceil(c / (numYears || 1));
+                yearlyAllocMap[p] = Math.ceil(c / numYears);
             }
 
             reportHTML += `<div class="page-break" style="padding: 10px; page-break-before: always;">`;
