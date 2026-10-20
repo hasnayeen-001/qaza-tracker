@@ -3,7 +3,7 @@
 \
 🕋 Automated Qaza Prayer Tracker & Printable Generator
 
-A clean, privacy-focused web application designed for non-coders and individuals looking to calculate, adjust, and track their missed (*Qaza*) obligatory prayers over a lifetime or customized multi-year range.
+A clean, privacy-focused web application designed for individuals looking to calculate, adjust, and track their missed (*Qaza*) obligatory prayers over a lifetime or customized multi-year range.
 
 The system calculates missed prayers, applies a customizable **Safety Margin**, divides obligations across the 5 daily Islamic prayers (**Fajr, Zuhr, Asr, Maghrib, Isha**), and generates a print-ready, high-quality **ReportLab PDF** equipped with custom rounded-corner checkbox grids.
 
