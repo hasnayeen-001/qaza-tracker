@@ -16,20 +16,19 @@ The system calculates missed prayers, applies a customizable **Safety Margin**, 
 
 **Step 1: Select Year Range & History**
 
-   * Choose your starting and ending years **(Mandatory)**.
+   * Choose your starting and ending years. **(Mandatory)**
 
-   * Edit the **Adjusted Days** column (default 365) and **Avg Wakt Prayed** column (0.0 to 5.0) for each year **(Optional - For more accuracy, You should edit this section))**.
+   * Edit the **Adjusted Days** column (default 365) and **Avg Wakt Prayed** column (0.0 to 5.0) for each year. **(Optional - For more accuracy, You should edit this section))**
 
 **Step 2: Review Summary & Set Safety Margin**
 
    * Inspect calculated missed prayers.
 
-   * Adjust your **Final Safety Target** to round up your target for peace of mind **(MANDATORY!!!)**.
+   * Adjust your **Final Safety Target** to round up your target for peace of mind. **(MANDATORY!!!)**
 
 **Step 3: Allocate Lifetime Target**
 
-   * Distribute your total Safety Target across **Fajr, Zuhr, Asr, Maghrib, and Isha** **(Mandatory)**.
-
+   * Distribute your total Safety Target across **Fajr, Zuhr, Asr, Maghrib, and Isha**. **(Mandatory)**
    * Ensure the gap reaches zero so the success banner appears.
 
 **Step 4: Generate Printable PDF**
