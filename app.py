@@ -7,7 +7,7 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, NextPageTemplate, PageBreak, Paragraph, Spacer, Table, TableStyle, KeepTogether
+from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, NextPageTemplate, PageBreak, Paragraph, Spacer, Table, TableStyle
 from reportlab.pdfgen import canvas
 
 # Page Configuration
@@ -185,31 +185,52 @@ class NumberedCanvas(canvas.Canvas):
         self.drawRightString(565, 20, f"Page {self._pageNumber} of {page_count}")
         self.restoreState()
 
-def make_rounded_checkbox_grid(count, cols=15):
+def make_repeating_prayer_table(init_letter, count, cols=15):
+    """Creates a single Table containing the Wakt header in Row 0 and checkboxes in sub-rows, with repeatRows=1."""
     styles = getSampleStyleSheet()
-    if count <= 0:
-        return Paragraph("<i>No qaza prayers required</i>", ParagraphStyle('NoneReq', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor("#718096")))
+    header_style = ParagraphStyle('WaktHeader', parent=styles['Heading3'], fontSize=11, leading=14, textColor=colors.HexColor("#2D3748"))
     
-    cells = []
+    if count <= 0:
+        header_p = Paragraph(f"<b>{init_letter} (Target: 0)</b> - <i>No qaza prayers required</i>", header_style)
+        t = Table([[header_p]], colWidths=[535])
+        t.setStyle(TableStyle([('BOTTOMPADDING', (0,0), (-1,-1), 6)]))
+        return t
+
+    header_p = Paragraph(f"<b>{init_letter} (Target: {count})</b>", header_style)
+    
+    # Row 0: Header Paragraph spanning across all columns
+    table_data = [[header_p] + [''] * (cols - 1)]
+    
+    # Checkbox drawings
     row = []
     for i in range(1, count + 1):
         d = Drawing(14, 14)
         d.add(Rect(1, 1, 12, 12, rx=3, ry=3, fillColor=colors.white, strokeColor=colors.HexColor("#4A5568"), strokeWidth=1))
         row.append(d)
         if len(row) == cols:
-            cells.append(row)
+            table_data.append(row)
             row = []
     if row:
         while len(row) < cols:
             row.append(Drawing(14, 14))
-        cells.append(row)
-    
-    t = Table(cells, colWidths=[18]*cols)
+        table_data.append(row)
+
+    # colWidths of 18pt each for 15 columns = ~270pt total grid width
+    col_widths = [18] * cols
+
+    t = Table(table_data, colWidths=col_widths, repeatRows=1)
     t.setStyle(TableStyle([
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
-        ('TOPPADDING', (0,0), (-1,-1), 2),
+        # Row 0 (Header) styling: span across 15 columns
+        ('SPAN', (0, 0), (cols - 1, 0)),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 4),
+        ('TOPPADDING', (0, 0), (-1, 0), 6),
+        # Checkbox cells styling
+        ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 2),
+        ('TOPPADDING', (0, 1), (-1, -1), 2),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
     ]))
     return t
 
@@ -298,12 +319,9 @@ def generate_pdf_bytes(df, overestimated_target, allocations_dict, yearly_alloc,
         
         for prayer, count in yearly_alloc.items():
             init_letter = initial_map_local[prayer]
-            grid_table = make_rounded_checkbox_grid(count, cols=15)
-            
-            header_para = Paragraph(f"<b>{init_letter} (Target: {count})</b>", ParagraphStyle('PH', parent=styles['Heading3'], fontSize=11, textColor=colors.HexColor("#2D3748")))
-            
-            # Using KeepTogether to keep the prayer title glued to its grid without triggering layout nesting errors
-            story.append(KeepTogether([header_para, Spacer(1, 4), grid_table, Spacer(1, 8)]))
+            prayer_table = make_repeating_prayer_table(init_letter, count, cols=15)
+            story.append(prayer_table)
+            story.append(Spacer(1, 8))
 
     doc.build(story, canvasmaker=NumberedCanvas)
     pdf_buffer.seek(0)
