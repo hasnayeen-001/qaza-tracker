@@ -126,7 +126,7 @@
             #printReport { display: block !important; }
             .page-break { page-break-before: always; }
             
-            /* Repeat table headers at the top of every printed page */
+            /* Ensures headers repeat at the top of every printed page */
             .repeat-header { 
                 display: table-header-group; 
             }
@@ -422,39 +422,41 @@
                 yearlyAllocMap[p] = Math.ceil(c / numYears);
             }
 
+            // Wrapping the entire year inside a single table with a repeating <thead class="repeat-header">
             reportHTML += `<div class="page-break" style="padding: 10px; page-break-before: always;">
-                <h2 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin: 0 0 15px 0;">${row.year}</h2>`;
-            
-            for(let [prayer, count] of Object.entries(yearlyAllocMap)) {
-                let initLetter = initialMap[prayer];
-                
-                // Each prayer is wrapped in its own table with a repeating header
-                reportHTML += `
                 <table class="print-table">
                     <thead class="repeat-header">
                         <tr>
                             <td>
-                                <b style="font-size: 14px; color: #2D3748; display: block; background: #FFF; padding-bottom: 4px;">${initLetter} (Target: ${count})</b>
+                                <h2 style="color: #1A365D; border-bottom: 1px solid #CBD5E0; padding-bottom: 5px; margin: 0 0 15px 0; background: #FFF;">${row.year}</h2>
                             </td>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>
-                                <div class="checkbox-grid">`;
+                            <td>`;
+            
+            for(let [prayer, count] of Object.entries(yearlyAllocMap)) {
+                let initLetter = initialMap[prayer];
+                
+                reportHTML += `
+                <div style="margin-bottom: 10px;">
+                    <b style="font-size: 14px; color: #2D3748; display: block; margin-bottom: 4px;">${initLetter} (Target: ${count})</b>
+                    <div class="checkbox-grid">`;
                 
                 for(let i = 1; i <= count; i++) {
                     reportHTML += `<div class="checkbox-box"></div>`;
                 }
                 
                 reportHTML += `</div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>`;
+                </div>`;
             }
 
-            reportHTML += `</div>`;
+            reportHTML += `</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>`;
         });
 
         document.getElementById('printReport').innerHTML = reportHTML;
