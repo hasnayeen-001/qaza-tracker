@@ -16,15 +16,15 @@ The system calculates missed prayers, applies a customizable **Safety Margin**, 
 
 1. **Step 1: Select Year Range & History**
 
-   * Choose your starting and ending years (Mandatory).
+   * Choose your starting and ending years **(Mandatory)**.
 
-   * Edit the **Adjusted Days** column (default 365) and **Avg Wakt Prayed** column (0.0 to 5.0) for each year (Optional).
+   * Edit the **Adjusted Days** column (default 365) and **Avg Wakt Prayed** column (0.0 to 5.0) for each year **(Optional)**.
 
 2. **Step 2: Review Summary & Set Safety Margin**
 
    * Inspect calculated missed prayers.
 
-   * Adjust your **Final Safety Target** to round up your target for peace of mind (MANDATORY!!!).
+   * Adjust your **Final Safety Target** to round up your target for peace of mind **(MANDATORY!!!)**.
 
 3. **Step 3: Allocate Lifetime Target**
 
