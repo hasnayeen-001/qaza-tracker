@@ -1,5 +1,5 @@
 [readme.md](https://github.com/user-attachments/files/33598019/readme.md)
-# About This Project
+# About The Project
 \
 🕋 Automated Qaza Prayer Tracker & Printable Generator
 
