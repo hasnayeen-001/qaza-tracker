@@ -8,10 +8,11 @@ A clean, privacy-focused web application designed for individuals looking to cal
 The system calculates missed prayers, applies a customizable **Safety Margin**, divides obligations across the 5 daily Islamic prayers (**Fajr, Zuhr, Asr, Maghrib, Isha**), and generates a print-ready, high-quality **ReportLab PDF** equipped with custom rounded-corner checkbox grids.
 
 **Now available on 3 platforms! Choose how you want to use it:**
-- ☁️ **Option 1: Live Cloud Version** — 👉 Link 1: https://hasnayeen-001.github.io/qaza-tracker
-                                        👉 Link 2: https://kaza-tracker.streamlit.app
+- ☁️ **Option 1: Live Cloud Version**
+  - 👉 Link 1: https://hasnayeen-001.github.io/qaza-tracker
+  - 👉 Link 2: https://kaza-tracker.streamlit.app
 - 🌐 **Option 2: Standalone Browser Version** — Download ([index.html](index.html)) file and double-click it to run it instantly offline in any web browser.
-- 🐍 **Option 3: Local Python Server** — Clone the repository and run `streamlit run app.py` on your machine.
+- 🐍 **Option 3: Local Python Server** — Clone the repository and run `streamlit run app.py` on your machine.  
 
 ## 📖 How to Use
 
