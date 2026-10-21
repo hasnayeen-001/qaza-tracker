@@ -304,7 +304,7 @@ def generate_pdf_bytes(df, overestimated_target, allocations_dict, yearly_alloc,
     story.append(Spacer(1, 12))
 
     story.append(Paragraph("2. Principle of Privacy & Concealing Shortcomings (Sitr)", h2_style))
-    story.append(Paragraph("If a shortfall or sin is <b>strictly personal between you and Allah</b> and does not harm or affect anyone else, Islam strongly encourages keeping it concealed while performing sincere repentance (<i>Tawbah</i>) and good deeds. Islam teaches that if Allah conceals a person's past sins or shortcomings, that person should not expose themselves or publicize those mistakes. Instead, they should turn to Allah in sincere repentance and focus on doing good deeds.", body_style))
+    story.append(Paragraph("If a shortfall or sin is <b>strictly personal between you and Allah</b> and <b>does not harm or affect anyone else</b>, Islam strongly encourages keeping it concealed while performing sincere repentance (<i>Tawbah</i>) and good deeds. Islam teaches that if Allah conceals a person's past sins or shortcomings, that person should not expose themselves or publicize those mistakes. Instead, they should turn to Allah in sincere repentance and focus on doing good deeds.", body_style))
     story.append(Spacer(1, 6))
     story.append(Paragraph("To preserve complete confidentiality:", body_style))
     story.append(Spacer(1, 4))
