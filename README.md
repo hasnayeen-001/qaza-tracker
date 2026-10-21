@@ -6,8 +6,8 @@
 A clean, privacy-focused web application designed for individuals looking to calculate, adjust, and track their missed (*Qaza*) obligatory prayers over a lifetime or customized multi-year range.
 
 📌 Purpose & The Safe Path
-The Debate: Some scholars advise focusing solely on voluntary (Nafl) prayers after sincere repentance, while the majority view (Jumhoor) requires making up past missed prayers (Qaza).
-The Safe Path: This tracker follows the majority opinion, offering a structured way to clear past debts for total spiritual peace of mind.
+- The Debate: Some scholars advise focusing solely on voluntary (Nafl) prayers after sincere repentance, while the majority view (Jumhoor) requires making up past missed prayers (Qaza).
+- The Safe Path: This tracker follows the majority opinion, offering a structured way to clear past debts for total spiritual peace of mind.
 
 **Now available on 3 platforms! Choose how you want to use it:**
 - ☁️ **Option 1: Live Cloud Version**
