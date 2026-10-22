@@ -5,7 +5,8 @@
 
 A clean, privacy-focused web application designed for individuals looking to calculate, adjust, and track their missed (*Qaza*) obligatory prayers over a lifetime.
 
-📌 Purpose & The Safe Path
+📌 **Purpose & The Safe Path**
+
 Among Islamic scholars, there are two primary views regarding prayers missed over a prolonged period:
 
 - **The First View**: Intentionally abandoning prayer for long periods is a grave matter that invalidates past
