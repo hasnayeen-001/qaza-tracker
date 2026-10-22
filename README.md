@@ -3,11 +3,18 @@
 \
 🕋 Automated Qaza Prayer Tracker & Printable Generator
 
-A clean, privacy-focused web application designed for individuals looking to calculate, adjust, and track their missed (*Qaza*) obligatory prayers over a lifetime or customized multi-year range.
+A clean, privacy-focused web application designed for individuals looking to calculate, adjust, and track their missed (*Qaza*) obligatory prayers over a lifetime.
 
 📌 Purpose & The Safe Path
-- Some scholars advise focusing solely on voluntary (Nafl) prayers after sincere repentance, while the majority view (Jumhoor) requires making up past missed prayers (Qaza).
-- The Safe Path: This tracker follows the majority opinion, offering a structured way to clear past debts for total spiritual peace of mind.
+Among Islamic scholars, there are two primary views regarding prayers missed over a prolonged period:
+• The First View: Intentionally abandoning prayer for long periods is a grave matter that invalidates past
+obligations upon sincere repentance, meaning making up past years (Qaza) is not required, and one should
+focus entirely on abundant voluntary (Nafl) prayers.
+• The Majority View (Jumhoor): Missed obligatory prayers remain a binding spiritual debt owed to Allah
+(SWT) that must be systematically fulfilled and repaid alongside sincere repentance (Tawbah).
+To take the safest path and achieve total peace of mind, this document serves as a structured, personal tool to
+systematically fulfill all past debts under the majority opinion, ensuring that your obligations to Allah are fully
+cleared.
 
 **Now available on 3 platforms! Choose how you want to use it:**
 - ☁️ **Option 1: Live Cloud Version**
