@@ -56,3 +56,6 @@ This app runs entirely locally or in your private session. No personal prayer da
 ## 📄 License
 
 This project is open-source.
+
+
+My other project (Muhasaba & Self-Purification): https://github.com/hasnayeen-001/wipeout-project
