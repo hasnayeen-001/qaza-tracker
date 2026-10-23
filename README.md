@@ -15,7 +15,7 @@ focus entirely on abundant voluntary (Nafl) prayers.
 - **The Majority View (Jumhoor)**: Missed obligatory prayers remain a binding spiritual debt owed to Allah
 (SWT) that must be systematically fulfilled and repaid alongside sincere repentance (Tawbah).
 
-To take the safest path and achieve total peace of mind, this document serves as a structured, personal tool to
+To take the safest path and achieve total peace of mind, this serves as a structured, personal tool to
 systematically fulfill all past debts under the majority opinion, ensuring that your obligations to Allah are fully
 cleared. 
 
