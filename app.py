@@ -20,7 +20,9 @@ st.markdown("Calculate your missed prayers, adjust your **safety margin**, alloc
 # STEP 1: YEAR RANGE SELECTOR & HISTORY
 # ==========================================
 st.header("Step 1: Select Your Year Range & Prayer History")
-st.markdown("Select your starting year (e.g., year of puberty) and ending year. The system will automatically generate your yearly table. *(Tip: The years are locked automatically, but you can freely click and type into the **Adjusted Days** and **Avg Wakt** columns).*")
+st.markdown("Select your starting year (such as the year of puberty) and ending year to generate the table.
+
+By default, Adjusted Days is set to 365, but you can edit it directly in the table to deduct days for a mid-year puberty start or menses. You can also adjust your Avg Wakt Prayed for each year.*")
 
 col_yr1, col_yr2 = st.columns(2)
 start_year = col_yr1.number_input("Start Year", min_value=1900, max_value=2300, value=2020, step=1)
