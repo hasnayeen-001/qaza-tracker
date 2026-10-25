@@ -293,7 +293,7 @@ def generate_pdf_bytes(df, overestimated_target, allocations_dict, yearly_alloc,
     story.append(Spacer(1, 10))
     
     story.append(Paragraph("“A debt owed to Allah has more right to be paid back.”", quote_style))
-    story.append(Paragraph("<font size=9 color='#718096'>— Sahih al-Bukhari (1954)</font>", body_style))
+    story.append(Paragraph("<font size=9 color='#718096'>— Sahih al-Bukhari (1953)</font>", body_style))
     story.append(Spacer(1, 12))
 
     story.append(Paragraph("1. Purpose & The Safe Path", h2_style))
